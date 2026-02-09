@@ -1,0 +1,33 @@
+# ==============================================================================
+# Git Attributes - Security & Binary File Handling
+# ==============================================================================
+
+# Certificate and key files - mark as binary (prevents diff exposure)
+*.pfx binary
+*.p12 binary
+*.cer binary
+*.pem binary
+*.key binary
+*.crt binary
+
+# Prevent merge of sensitive configuration files
+app-config*.json merge=ours
+*-config.json merge=ours
+
+# XML exports may contain sensitive tenant data
+exports/*.xml binary
+
+# PowerShell scripts - ensure consistent line endings
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+
+# Markdown documentation
+*.md text eol=crlf
+
+# JSON configuration
+*.json text eol=crlf
+
+# Ensure .gitignore is always tracked as text
+.gitignore text eol=crlf
+.gitattributes text eol=crlf

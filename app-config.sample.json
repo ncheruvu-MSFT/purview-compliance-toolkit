@@ -1,0 +1,12 @@
+{
+  "CertificatePath": "C:\\Path\\To\\Your\\mycert.pfx",
+  "AppName": "Purview-SIT-Migration-App",
+  "CerPath": "C:\\Path\\To\\Your\\mycert.cer",
+  "CertificateThumbprint": "<YOUR-CERTIFICATE-THUMBPRINT>",
+  "AssignedRole": "Compliance Administrator",
+  "Organization": "<your-tenant>.onmicrosoft.com",
+  "AppId": "<YOUR-APP-ID-GUID>",
+  "ExpiryDate": "2027-01-01 00:00:00",
+  "TenantId": "<YOUR-TENANT-ID-GUID>",
+  "CreatedDate": "2026-01-01 00:00:00"
+}
