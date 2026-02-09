@@ -72,8 +72,12 @@ $requiredFiles = @(
     "02-Create-Sample-SITs.ps1",
     "03-Export-Custom-SITs.ps1",
     "04-Import-Custom-SITs.ps1",
+    "05-Create-Sensitivity-Labels.ps1",
+    "06-Create-AutoLabeling-Policy.ps1",
+    "07-Verify-AutoLabeling.ps1",
     "99-Test-Migration-Loop.ps1",
     "Sample-Automated-Migration.ps1",
+    "Sample-EndToEnd-AutoLabeling.ps1",
     "Verify-Security.ps1",
     "hooks\pre-commit.ps1",
     "hooks\Install-PreCommitHook.ps1"
