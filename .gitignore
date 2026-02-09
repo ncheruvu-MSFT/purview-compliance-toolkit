@@ -1,0 +1,137 @@
+# ==============================================================================
+# SECURITY - NEVER COMMIT THESE FILES
+# ==============================================================================
+
+# Certificates and Private Keys (CRITICAL - NEVER COMMIT!)
+*.pfx
+*.p12
+*.cer
+*.pem
+*.key
+*.crt
+mycert*
+certificate*
+
+# App Registration Configuration Files
+app-config*.json
+*-config.json
+source-app-config.json
+target-app-config.json
+
+# Allow sample/template config (safe - contains only placeholders)
+!app-config.sample.json
+!*-config.sample.json
+
+# Credentials and Secrets
+*credentials*
+*password*
+*secret*
+*.cred
+*.credential
+
+# ==============================================================================
+# EXPORTED DATA (May Contain Sensitive Information)
+# ==============================================================================
+
+# Exports (contains sensitive tenant data and patterns)
+exports/*.xml
+exports/archive/*.xml
+exports/**/*.xml
+
+# Keep directory structure
+!exports/.gitkeep
+!exports/archive/.gitkeep
+
+# ==============================================================================
+# LOGS AND TEMPORARY FILES
+# ==============================================================================
+
+# Logs
+logs/
+*.log
+migration-log-*.log
+
+# Temporary files
+*.tmp
+*.bak
+*~
+*.swp
+
+# Migration log files
+migration-log-*.log
+
+# ==============================================================================
+# AZURE AND CLOUD CREDENTIALS
+# ==============================================================================
+
+# Azure token cache and profiles
+TokenCache.dat
+AzureProfile.json
+.azure/
+azureauth.properties
+
+# Terraform state (if applicable)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ==============================================================================
+# POWERSHELL
+# ==============================================================================
+
+# PowerShell Session State
+*.ps1xml
+*.pssc
+
+# ==============================================================================
+# IDE AND EDITOR
+# ==============================================================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+
+# JetBrains
+.idea/
+*.iml
+
+# ==============================================================================
+# OPERATING SYSTEM
+# ==============================================================================
+
+# Windows
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.directory
+
+# ==============================================================================
+# BUILD AND PACKAGE OUTPUT
+# ==============================================================================
+
+# Node modules (if using any JS tooling)
+node_modules/
+
+# Python (if using any Python scripts)
+__pycache__/
+*.pyc
+*.pyo
+
+# NuGet
+packages/
+*.nupkg
