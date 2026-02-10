@@ -4,13 +4,13 @@
 
 .DESCRIPTION
     Creates sensitivity labels in Microsoft Purview to be used with
-    auto-labeling policies. The labels are created with a parent-child
-    hierarchy following Microsoft best practices:
+    auto-labeling policies. Labels are created as flat (top-level) labels
+    to ensure compatibility with Purview's modern label scheme, which
+    restricts sub-label creation to pre-existing label groups.
 
-    Parent: "Demo-Confidential"
-      └── Sub-label: "Demo-Confidential-PII" (with content marking)
-    Parent: "Demo-Highly-Confidential"
-      └── Sub-label: "Demo-HighlyConfidential-Finance" (with content marking)
+    Labels created:
+      "Demo-Confidential-PII"              (with content marking)
+      "Demo-HighlyConfidential-Finance"     (with content marking + watermark)
 
     Labels include:
     - Content marking (headers, footers, watermarks)
@@ -26,7 +26,7 @@
     Helps avoid conflicts with existing labels
 
 .PARAMETER EnableEncryption
-    If specified, adds encryption settings to sub-labels.
+    If specified, adds encryption settings to labels.
     Requires Azure Rights Management to be configured.
 
 .PARAMETER PublishToAll
@@ -52,6 +52,10 @@
     - For encryption: Azure Rights Management must be activated
 
     Label changes may take 24-48 hours to propagate to all Microsoft 365 apps.
+
+    Design note: Labels are created as flat top-level labels (not sub-labels)
+    because the modern label scheme in Purview requires parent labels to be
+    created as "label groups" which cannot be done via PowerShell New-Label.
 
 .LINK
     https://learn.microsoft.com/en-us/purview/create-sensitivity-labels
@@ -88,49 +92,30 @@ Write-Host "✅ Connected to Security & Compliance PowerShell" -ForegroundColor 
 Write-Host ""
 #endregion
 
-#region Define Label Hierarchy
+#region Define Labels (flat — no parent/child hierarchy)
+# Using flat labels avoids the "label group" constraint in Purview's modern
+# label scheme, where sub-labels can only be created under pre-existing label
+# groups — something that cannot be done via New-Label in PowerShell.
 $labels = @(
-    # ── Parent: Confidential ──
     @{
-        Name        = "$LabelPrefix-Confidential"
-        DisplayName = "$LabelPrefix - Confidential"
-        Tooltip     = "Business data that could cause harm if shared with unauthorized people."
-        Comment     = "Parent label for Confidential classification"
-        Priority    = 0
-        IsParent    = $true
-        Children    = @(
-            @{
-                Name        = "$LabelPrefix-Confidential-PII"
-                DisplayName = "$LabelPrefix - Confidential \ PII Data"
-                Tooltip     = "Contains Personally Identifiable Information. Handle according to data privacy policies."
-                Comment     = "Sub-label for PII data under Confidential"
-                Priority    = 1
-                HeaderText  = "CONFIDENTIAL - PII DATA"
-                FooterText  = "This document contains PII. Handle in accordance with data privacy policies."
-                WatermarkText = ""
-            }
-        )
+        Name          = "$LabelPrefix-Confidential-PII"
+        DisplayName   = "$LabelPrefix - Confidential - PII Data"
+        Tooltip       = "Contains Personally Identifiable Information. Handle according to data privacy policies."
+        Comment       = "Sensitivity label for PII data (Confidential tier)"
+        Priority      = 0
+        HeaderText    = "CONFIDENTIAL - PII DATA"
+        FooterText    = "This document contains PII. Handle in accordance with data privacy policies."
+        WatermarkText = ""
     },
-    # ── Parent: Highly Confidential ──
     @{
-        Name        = "$LabelPrefix-HighlyConfidential"
-        DisplayName = "$LabelPrefix - Highly Confidential"
-        Tooltip     = "Very sensitive business data that would cause serious harm if shared with unauthorized people."
-        Comment     = "Parent label for Highly Confidential classification"
-        Priority    = 2
-        IsParent    = $true
-        Children    = @(
-            @{
-                Name        = "$LabelPrefix-HighlyConfidential-Finance"
-                DisplayName = "$LabelPrefix - Highly Confidential \ Finance"
-                Tooltip     = "Contains sensitive financial data. Restricted to authorized finance personnel only."
-                Comment     = "Sub-label for financial data under Highly Confidential"
-                Priority    = 3
-                HeaderText  = "HIGHLY CONFIDENTIAL - FINANCIAL DATA"
-                FooterText  = "This document contains sensitive financial information. Unauthorized disclosure is prohibited."
-                WatermarkText = "HIGHLY CONFIDENTIAL"
-            }
-        )
+        Name          = "$LabelPrefix-HighlyConfidential-Finance"
+        DisplayName   = "$LabelPrefix - Highly Confidential - Finance"
+        Tooltip       = "Contains sensitive financial data. Restricted to authorized finance personnel only."
+        Comment       = "Sensitivity label for financial data (Highly Confidential tier)"
+        Priority      = 1
+        HeaderText    = "HIGHLY CONFIDENTIAL - FINANCIAL DATA"
+        FooterText    = "This document contains sensitive financial information. Unauthorized disclosure is prohibited."
+        WatermarkText = "HIGHLY CONFIDENTIAL"
     }
 )
 #endregion
@@ -138,8 +123,7 @@ $labels = @(
 #region Helper Functions
 function New-SensitivityLabelSafe {
     param(
-        [hashtable]$LabelConfig,
-        [string]$ParentId
+        [hashtable]$LabelConfig
     )
 
     $labelName = $LabelConfig.Name
@@ -157,44 +141,34 @@ function New-SensitivityLabelSafe {
         DisplayName = $LabelConfig.DisplayName
         Tooltip     = $LabelConfig.Tooltip
         Comment     = $LabelConfig.Comment
+        ContentType = "File, Email"
     }
 
-    # If this is a child label, set parent
-    if ($ParentId) {
-        $params["ParentId"] = $ParentId
+    # Header settings
+    if ($LabelConfig.HeaderText) {
+        $params["ApplyContentMarkingHeaderEnabled"]    = $true
+        $params["ApplyContentMarkingHeaderText"]       = $LabelConfig.HeaderText
+        $params["ApplyContentMarkingHeaderFontSize"]   = 10
+        $params["ApplyContentMarkingHeaderFontColor"]  = "#FF0000"
+        $params["ApplyContentMarkingHeaderAlignment"]  = "Center"
     }
 
-    # Add content marking for non-parent labels
-    if (-not $LabelConfig.IsParent) {
-        # Header
-        if ($LabelConfig.HeaderText) {
-            $params["ContentType"] = "File, Email"
+    # Footer settings
+    if ($LabelConfig.FooterText) {
+        $params["ApplyContentMarkingFooterEnabled"]    = $true
+        $params["ApplyContentMarkingFooterText"]       = $LabelConfig.FooterText
+        $params["ApplyContentMarkingFooterFontSize"]   = 8
+        $params["ApplyContentMarkingFooterFontColor"]  = "#666666"
+        $params["ApplyContentMarkingFooterAlignment"]  = "Center"
+    }
 
-            # Header settings
-            $params["ApplyContentMarkingHeaderEnabled"]    = $true
-            $params["ApplyContentMarkingHeaderText"]       = $LabelConfig.HeaderText
-            $params["ApplyContentMarkingHeaderFontSize"]   = 10
-            $params["ApplyContentMarkingHeaderFontColor"]  = "#FF0000"
-            $params["ApplyContentMarkingHeaderAlignment"]  = "Center"
-
-            # Footer settings
-            if ($LabelConfig.FooterText) {
-                $params["ApplyContentMarkingFooterEnabled"]    = $true
-                $params["ApplyContentMarkingFooterText"]       = $LabelConfig.FooterText
-                $params["ApplyContentMarkingFooterFontSize"]   = 8
-                $params["ApplyContentMarkingFooterFontColor"]  = "#666666"
-                $params["ApplyContentMarkingFooterAlignment"]  = "Center"
-            }
-
-            # Watermark settings
-            if ($LabelConfig.WatermarkText) {
-                $params["ApplyWaterMarkingEnabled"]    = $true
-                $params["ApplyWaterMarkingText"]       = $LabelConfig.WatermarkText
-                $params["ApplyWaterMarkingFontSize"]   = 48
-                $params["ApplyWaterMarkingFontColor"]  = "#FF000033"
-                $params["ApplyWaterMarkingLayout"]     = "Diagonal"
-            }
-        }
+    # Watermark settings
+    if ($LabelConfig.WatermarkText) {
+        $params["ApplyWaterMarkingEnabled"]    = $true
+        $params["ApplyWaterMarkingText"]       = $LabelConfig.WatermarkText
+        $params["ApplyWaterMarkingFontSize"]   = 48
+        $params["ApplyWaterMarkingFontColor"]  = "#FF0000"
+        $params["ApplyWaterMarkingLayout"]     = "Diagonal"
     }
 
     # Create the label
@@ -216,24 +190,12 @@ Write-Host ""
 $createdLabels = @()
 $allCreatedLabelNames = @()
 
-foreach ($parentDef in $labels) {
-    Write-Host "📁 Parent: $($parentDef.DisplayName)" -ForegroundColor Cyan
-
-    # Create parent label
-    $parentLabel = New-SensitivityLabelSafe -LabelConfig $parentDef
-    if ($parentLabel) {
-        $createdLabels += $parentLabel
-        $allCreatedLabelNames += $parentDef.Name
-
-        # Create child labels
-        foreach ($childDef in $parentDef.Children) {
-            Write-Host "   📄 Sub-label: $($childDef.DisplayName)" -ForegroundColor Gray
-            $childLabel = New-SensitivityLabelSafe -LabelConfig $childDef -ParentId $parentLabel.Guid
-            if ($childLabel) {
-                $createdLabels += $childLabel
-                $allCreatedLabelNames += $childDef.Name
-            }
-        }
+foreach ($labelDef in $labels) {
+    Write-Host "📄 Label: $($labelDef.DisplayName)" -ForegroundColor Cyan
+    $label = New-SensitivityLabelSafe -LabelConfig $labelDef
+    if ($label) {
+        $createdLabels += $label
+        $allCreatedLabelNames += $labelDef.Name
     }
     Write-Host ""
 }
@@ -282,18 +244,15 @@ Write-Host "╔═════════════════════�
 Write-Host "║  ✅ Sensitivity Labels Created                                ║" -ForegroundColor Green
 Write-Host "╚═══════════════════════════════════════════════════════════════╝" -ForegroundColor Green
 Write-Host ""
-Write-Host "📋 Label Hierarchy:" -ForegroundColor Cyan
+Write-Host "📋 Labels Created:" -ForegroundColor Cyan
 
-foreach ($parentDef in $labels) {
-    Write-Host "   📁 $($parentDef.DisplayName)" -ForegroundColor White
-    foreach ($childDef in $parentDef.Children) {
-        $markings = @()
-        if ($childDef.HeaderText)    { $markings += "Header" }
-        if ($childDef.FooterText)    { $markings += "Footer" }
-        if ($childDef.WatermarkText) { $markings += "Watermark" }
-        $markingInfo = if ($markings.Count -gt 0) { " [Markings: $($markings -join ', ')]" } else { "" }
-        Write-Host "      └── 📄 $($childDef.DisplayName)$markingInfo" -ForegroundColor Gray
-    }
+foreach ($labelDef in $labels) {
+    $markings = @()
+    if ($labelDef.HeaderText)    { $markings += "Header" }
+    if ($labelDef.FooterText)    { $markings += "Footer" }
+    if ($labelDef.WatermarkText) { $markings += "Watermark" }
+    $markingInfo = if ($markings.Count -gt 0) { " [Markings: $($markings -join ', ')]" } else { "" }
+    Write-Host "   🏷️  $($labelDef.DisplayName)$markingInfo" -ForegroundColor White
 }
 
 Write-Host ""

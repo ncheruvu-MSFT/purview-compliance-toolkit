@@ -176,16 +176,14 @@ $autoLabelPolicies = @(
         LabelName   = "$LabelPrefix-Confidential-PII"
         SITNames    = @("Demo-Employee-ID", "Demo-Customer-Reference")
         MinCount    = 1
-        MaxCount    = -1   # unlimited
         Confidence  = 75
     },
     @{
-        Name        = "$LabelPrefix-AutoLabel-Finance-Policy"
+        Name        = "$LabelPrefix-AutoLabel-Finance"
         Comment     = "Automatically labels content containing financial data (Product Codes, Credit Card Numbers)"
         LabelName   = "$LabelPrefix-HighlyConfidential-Finance"
         SITNames    = @("Demo-Product-Code", "Credit Card Number")
         MinCount    = 1
-        MaxCount    = -1
         Confidence  = 75
     }
 )
@@ -208,6 +206,10 @@ foreach ($policyDef in $autoLabelPolicies) {
     # Check if policy already exists
     $existingPolicy = Get-AutoSensitivityLabelPolicy -Identity $policyName -ErrorAction SilentlyContinue
     if ($existingPolicy) {
+        if ($existingPolicy.Mode -eq "PendingDeletion") {
+            Write-Host "   ⚠️  Policy '$policyName' is pending deletion. Please wait and retry later." -ForegroundColor Yellow
+            continue
+        }
         Write-Host "   ⚠️  Policy '$policyName' already exists" -ForegroundColor Yellow
         Write-Host "   Do you want to update it? (Y/N): " -NoNewline -ForegroundColor Yellow
         $response = Read-Host
@@ -219,32 +221,27 @@ foreach ($policyDef in $autoLabelPolicies) {
         # Remove existing policy to recreate
         try {
             Remove-AutoSensitivityLabelPolicy -Identity $policyName -Confirm:$false -ErrorAction Stop
-            Write-Host "   🗑️  Removed existing policy" -ForegroundColor Gray
-            Start-Sleep -Seconds 3
+            Write-Host "   🗑️  Removed existing policy, waiting for propagation..." -ForegroundColor Gray
+            Start-Sleep -Seconds 20
         } catch {
             Write-Host "   ❌ Failed to remove existing policy: $($_.Exception.Message)" -ForegroundColor Red
             continue
         }
     }
 
-    # Build SIT condition rules
-    # Each SIT becomes a condition group in the policy
+    # Build SIT condition rules using documented format:
+    # @(@{Name="SITName"; minCount="1"}, @{Name="SITName2"; minCount="1"})
     $sensitiveInformationConditions = @()
 
     foreach ($sitName in $policyDef.SITNames) {
         $sit = $foundSITs[$sitName]
         if ($sit) {
             $sensitiveInformationConditions += @{
-                name           = $sitName
-                id             = $sit.Id
-                type           = "Fingerprint"
-                mincount       = $policyDef.MinCount
-                maxcount       = $policyDef.MaxCount
-                confidencelevel = if ($policyDef.Confidence -eq 75) { "Medium" } 
-                                  elseif ($policyDef.Confidence -ge 85) { "High" } 
-                                  else { "Low" }
-                minconfidence  = $policyDef.Confidence
-                maxconfidence  = 100
+                Name              = $sitName
+                minCount          = [string]$policyDef.MinCount
+                confidencelevel   = if ($policyDef.Confidence -eq 75) { "Medium" }
+                                    elseif ($policyDef.Confidence -ge 85) { "High" }
+                                    else { "Low" }
             }
         }
     }
@@ -281,11 +278,24 @@ foreach ($policyDef in $autoLabelPolicies) {
         $ruleParams = @{
             Name                        = $ruleName
             Policy                      = $policyName
+            Workload                    = "SharePoint"
             ContentContainsSensitiveInformation = $sensitiveInformationConditions
         }
 
         $newRule = New-AutoSensitivityLabelRule @ruleParams -ErrorAction Stop
-        Write-Host "   ✅ Rule created: $ruleName" -ForegroundColor Green
+        Write-Host "   ✅ Rule created: $ruleName (SharePoint/OneDrive)" -ForegroundColor Green
+
+        # Create a separate rule for Exchange workload
+        $exchangeRuleName = "$policyName-Exchange-Rule"
+        $exchangeRuleParams = @{
+            Name                        = $exchangeRuleName
+            Policy                      = $policyName
+            Workload                    = "Exchange"
+            ContentContainsSensitiveInformation = $sensitiveInformationConditions
+        }
+
+        $newExchangeRule = New-AutoSensitivityLabelRule @exchangeRuleParams -ErrorAction Stop
+        Write-Host "   ✅ Rule created: $exchangeRuleName (Exchange)" -ForegroundColor Green
         Write-Host "      Conditions: $($policyDef.SITNames.Count) SIT(s) configured" -ForegroundColor Gray
 
         $createdPolicies += @{

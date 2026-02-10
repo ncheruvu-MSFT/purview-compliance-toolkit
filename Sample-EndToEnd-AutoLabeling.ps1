@@ -163,9 +163,7 @@ Write-Host ""
 
 $policyName = "$LabelPrefix-AutoLabel-Demo-LabelPolicy"
 $allLabelNames = @(
-    "$LabelPrefix-Confidential",
     "$LabelPrefix-Confidential-PII",
-    "$LabelPrefix-HighlyConfidential",
     "$LabelPrefix-HighlyConfidential-Finance"
 )
 
@@ -246,17 +244,17 @@ Write-Host ""
 Write-Host "   What was created:" -ForegroundColor Cyan
 Write-Host "   ─────────────────" -ForegroundColor DarkGray
 Write-Host "   🔍 3 Custom SITs (Employee ID, Product Code, Customer Reference)" -ForegroundColor White
-Write-Host "   🏷️  4 Sensitivity Labels (2 parents + 2 sub-labels)" -ForegroundColor White
+Write-Host "   🏷️  2 Sensitivity Labels (Confidential-PII, HighlyConfidential-Finance)" -ForegroundColor White
 Write-Host "   📢 1 Label Policy (published to all users)" -ForegroundColor White
 Write-Host "   📋 2 Auto-Labeling Policies (PII + Finance)" -ForegroundColor White
 Write-Host ""
 Write-Host "   How it works:" -ForegroundColor Cyan
 Write-Host "   ─────────────" -ForegroundColor DarkGray
 Write-Host "   • Email/document contains 'EMP-123456' or 'CUST-1234'" -ForegroundColor White
-Write-Host "     → Auto-labeled: $LabelPrefix - Confidential \ PII Data" -ForegroundColor Green
+Write-Host "     → Auto-labeled: $LabelPrefix - Confidential - PII Data" -ForegroundColor Green
 Write-Host ""
 Write-Host "   • Email/document contains 'PRD-ABCD-01' or credit card number" -ForegroundColor White
-Write-Host "     → Auto-labeled: $LabelPrefix - Highly Confidential \ Finance" -ForegroundColor Green
+Write-Host "     → Auto-labeled: $LabelPrefix - Highly Confidential - Finance" -ForegroundColor Green
 Write-Host ""
 
 if (-not $EnablePolicies) {

@@ -144,9 +144,7 @@ Write-Host "══════════════════════�
 Write-Host ""
 
 $expectedLabels = @(
-    @{ Name = "$LabelPrefix-Confidential";                IsParent = $true }
     @{ Name = "$LabelPrefix-Confidential-PII";            IsParent = $false; ExpectMarking = $true }
-    @{ Name = "$LabelPrefix-HighlyConfidential";          IsParent = $true }
     @{ Name = "$LabelPrefix-HighlyConfidential-Finance";  IsParent = $false; ExpectMarking = $true }
 )
 
@@ -227,7 +225,7 @@ $expectedPolicies = @(
         SITs      = @("Demo-Employee-ID", "Demo-Customer-Reference")
     },
     @{
-        Name      = "$LabelPrefix-AutoLabel-Finance-Policy"
+        Name      = "$LabelPrefix-AutoLabel-Finance"
         Label     = "$LabelPrefix-HighlyConfidential-Finance"
         SITs      = @("Demo-Product-Code", "Credit Card Number")
     }
