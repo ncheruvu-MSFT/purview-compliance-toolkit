@@ -135,15 +135,26 @@ try {
             Write-Host "   Size: $([math]::Round($fileSize, 2)) KB" -ForegroundColor Gray
             
             # Parse and show summary
+            # Note: SerializedClassificationRuleCollection is UTF-16 encoded.
+            # Use XmlDocument.Load() which auto-detects encoding from the XML declaration/BOM,
+            # rather than Get-Content -Encoding UTF8 which would fail on UTF-16 null bytes.
             try {
-                [xml]$preview = Get-Content $file -Encoding UTF8
-                $entities = $preview.RulePackage.RulePack.Rules.Entity
+                $preview = New-Object System.Xml.XmlDocument
+                $preview.Load($file)
+                $entities = $preview.RulePackage.Rules.Entity
+                if (-not $entities) {
+                    $entities = $preview.RulePackage.Rules.Version.Entity
+                }
                 
                 Write-Host "   SITs: $($entities.Count)" -ForegroundColor Gray
                 foreach ($entity in $entities | Select-Object -First 3) {
                     $sitId = $entity.id
-                    $resource = $preview.RulePackage.RulePack.LocalizedStrings.Resource | 
+                    $resource = $preview.RulePackage.LocalizedStrings.Resource | 
                         Where-Object { $_.idRef -eq $sitId }
+                    if (-not $resource) {
+                        $resource = $preview.RulePackage.Rules.LocalizedStrings.Resource | 
+                            Where-Object { $_.idRef -eq $sitId }
+                    }
                     
                     if ($resource) {
                         $sitName = $resource.Name.'#text'

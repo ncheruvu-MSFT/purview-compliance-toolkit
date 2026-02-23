@@ -11,6 +11,7 @@
 | `01-Connect-Tenant.ps1` | Connect to tenant (interactive or app-only) | Every migration session |
 | `03-Export-Custom-SITs.ps1` | Export SITs from source tenant | Source tenant only |
 | `04-Import-Custom-SITs.ps1` | Import SITs to target tenant | Target tenant only |
+| `Validate-ExportXml.ps1` | Validate/preview exported XML (encoding, structure) | After export, before import |
 | `Verify-Security.ps1` | Check for sensitive files before commit | Before `git commit` |
 
 ---
