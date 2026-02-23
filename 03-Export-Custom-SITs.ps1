@@ -141,9 +141,17 @@ try {
             try {
                 $preview = New-Object System.Xml.XmlDocument
                 $preview.Load($file)
-                $entities = $preview.RulePackage.Rules.Entity
-                if (-not $entities) {
-                    $entities = $preview.RulePackage.Rules.Version.Entity
+                # Entities can be directly under Rules or inside Version elements
+                $entities = @()
+                if ($preview.RulePackage.Rules.Entity) {
+                    $entities += @($preview.RulePackage.Rules.Entity)
+                }
+                if ($preview.RulePackage.Rules.Version) {
+                    foreach ($ver in @($preview.RulePackage.Rules.Version)) {
+                        if ($ver.Entity) {
+                            $entities += @($ver.Entity)
+                        }
+                    }
                 }
                 
                 Write-Host "   SITs: $($entities.Count)" -ForegroundColor Gray

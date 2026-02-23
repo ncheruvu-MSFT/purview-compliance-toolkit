@@ -50,11 +50,17 @@ try {
     $sourceXml = New-Object System.Xml.XmlDocument
     $sourceXml.Load($SourceXmlPath)
     
-    # Try direct path
-    $sourceEntities = $sourceXml.RulePackage.Rules.Entity
-    # If empty, try inside Version (common in exports)
-    if (-not $sourceEntities) {
-        $sourceEntities = $sourceXml.RulePackage.Rules.Version.Entity
+    # Entities can be directly under Rules or inside Version elements
+    $sourceEntities = @()
+    if ($sourceXml.RulePackage.Rules.Entity) {
+        $sourceEntities += @($sourceXml.RulePackage.Rules.Entity)
+    }
+    if ($sourceXml.RulePackage.Rules.Version) {
+        foreach ($ver in @($sourceXml.RulePackage.Rules.Version)) {
+            if ($ver.Entity) {
+                $sourceEntities += @($ver.Entity)
+            }
+        }
     }
 
     
