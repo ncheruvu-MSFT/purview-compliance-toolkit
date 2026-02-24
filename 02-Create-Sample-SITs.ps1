@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Create sample custom SITs for testing migration
 

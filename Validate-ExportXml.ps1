@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Validate and preview an exported SIT rule pack XML file.
 
@@ -55,6 +55,11 @@ begin {
             RulePackId = ""
             Publisher  = ""
             Errors     = @()
+            Warnings   = @()
+            DefinedProcessors    = @()
+            ReferencedProcessors = @()
+            MissingProcessors    = @()
+            ExternalProcessors   = @()
         }
 
         # --- Check file exists ---
@@ -177,7 +182,52 @@ begin {
                 $result.SITs += $sitInfo
             }
 
-            $result.Valid = $true
+            # --- Validate text processor references ---
+            $definedProcs = @{}
+            $processorTypes = @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword')
+            foreach ($pType in $processorTypes) {
+                $pNodes = $rules.SelectNodes("//*[local-name()='$pType']")
+                if ($pNodes) {
+                    foreach ($pNode in $pNodes) {
+                        $procId = $pNode.GetAttribute('id')
+                        if ($procId) {
+                            $definedProcs[$procId] = $pType
+                        }
+                    }
+                }
+            }
+            $result.DefinedProcessors = @($definedProcs.Keys)
+
+            $referencedProcs = @{}
+            $refNodes = $rules.SelectNodes("//*[@idRef]")
+            if ($refNodes) {
+                foreach ($refNode in $refNodes) {
+                    $localName = $refNode.LocalName
+                    if ($localName -eq 'Resource') { continue }
+                    $refId = $refNode.GetAttribute('idRef')
+                    if ($refId -and -not $referencedProcs.ContainsKey($refId)) {
+                        $referencedProcs[$refId] = $localName
+                    }
+                }
+            }
+            $result.ReferencedProcessors = @($referencedProcs.Keys)
+
+            foreach ($refId in $referencedProcs.Keys) {
+                if (-not $definedProcs.ContainsKey($refId)) {
+                    if ($refId -match '^(CEP_|Func_|Keyword_)') {
+                        $result.ExternalProcessors += $refId
+                        $result.Warnings += "External text processor reference: '$refId' (built-in, may not exist in target tenant)"
+                    } else {
+                        $result.MissingProcessors += $refId
+                        $result.Errors += "Missing text processor: '$refId' referenced by $($referencedProcs[$refId]) but not defined in XML"
+                        $result.Valid = $false
+                    }
+                }
+            }
+
+            if ($result.MissingProcessors.Count -eq 0 -and $result.Errors.Count -eq 0) {
+                $result.Valid = $true
+            }
         }
         catch {
             $result.Errors += "XML parse error: $($_.Exception.Message)"
@@ -236,6 +286,46 @@ process {
                     }
                     Write-Host "     Confidence: $($sit.Confidence) | Patterns: $($sit.Patterns)" -ForegroundColor DarkGray
                 }
+
+                # Text processor validation
+                Write-Host ""
+                Write-Host "   Text Processors:" -ForegroundColor Cyan
+                Write-Host "     Defined:    $($result.DefinedProcessors.Count)" -ForegroundColor Gray
+                Write-Host "     Referenced: $($result.ReferencedProcessors.Count)" -ForegroundColor Gray
+
+                if ($result.MissingProcessors.Count -gt 0) {
+                    Write-Host ""
+                    Write-Host "   ❌ MISSING text processors (will cause import failure):" -ForegroundColor Red
+                    foreach ($mp in $result.MissingProcessors) {
+                        Write-Host "     • $mp" -ForegroundColor Red
+                    }
+                    Write-Host ""
+                    Write-Host "   These processors are referenced but NOT defined in the XML." -ForegroundColor Yellow
+                    Write-Host "   The import WILL FAIL with 'Invalid text processor reference' error." -ForegroundColor Yellow
+                    Write-Host "   Fix: add the missing Regex/Keyword definitions, or re-export" -ForegroundColor Yellow
+                    Write-Host "   the source including ALL rule packs." -ForegroundColor Yellow
+                }
+
+                if ($result.ExternalProcessors.Count -gt 0) {
+                    Write-Host ""
+                    Write-Host "   ⚠️  External text processor references (built-in):" -ForegroundColor Yellow
+                    foreach ($ep in $result.ExternalProcessors) {
+                        Write-Host "     • $ep" -ForegroundColor Yellow
+                    }
+                    Write-Host "   These reference Microsoft's built-in rule pack." -ForegroundColor Gray
+                    Write-Host "   Import will succeed ONLY if these exist in the target tenant." -ForegroundColor Gray
+                }
+
+                if ($result.MissingProcessors.Count -eq 0 -and $result.ExternalProcessors.Count -eq 0) {
+                    Write-Host "     ✅ All references are self-contained" -ForegroundColor Green
+                }
+
+                if ($result.Warnings.Count -gt 0) {
+                    Write-Host ""
+                    foreach ($warn in $result.Warnings) {
+                        Write-Host "   ⚠️  $warn" -ForegroundColor Yellow
+                    }
+                }
             }
             else {
                 $failedFiles++
@@ -261,11 +351,13 @@ end {
         Write-Host "💡 Common issues:" -ForegroundColor Yellow
         Write-Host "   • 'hexadecimal value 0x00' → File is UTF-16 but was re-saved as UTF-8" -ForegroundColor Gray
         Write-Host "   • 'Name cannot begin with . character' → Same encoding mismatch" -ForegroundColor Gray
-        Write-Host "   • Fix: re-export using raw bytes: [IO.File]::WriteAllBytes()" -ForegroundColor Gray
+        Write-Host "   • 'Missing text processor' → XML references undefined Regex/Keyword/Function" -ForegroundColor Gray
+        Write-Host '   • Fix encoding: re-export using raw bytes: [IO.File]::WriteAllBytes()' -ForegroundColor Gray
         Write-Host "   • Do NOT use Get-Content -Encoding UTF8 to read/re-save these files" -ForegroundColor Gray
+        Write-Host "   • Fix text processors: include missing definitions or re-export all rule packs" -ForegroundColor Gray
     }
     else {
         Write-Host "✅ All files are valid and ready for import." -ForegroundColor Green
-        Write-Host "   Import with: .\04-Import-Custom-SITs.ps1 -SourceXmlPath <file>" -ForegroundColor Gray
+        Write-Host '   Import with: .\04-Import-Custom-SITs.ps1 -SourceXmlPath <file>' -ForegroundColor Gray
     }
 }

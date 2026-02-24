@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Export all custom SITs to XML file
 
@@ -171,6 +171,49 @@ try {
                 }
                 if ($entities.Count -gt 3) {
                     Write-Host "      ... and $($entities.Count - 3) more" -ForegroundColor Gray
+                }
+
+                # Post-export validation: check text processor references
+                $rules = $preview.RulePackage.Rules
+                $definedProcs = @{}
+                foreach ($pType in @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword')) {
+                    $pNodes = $rules.SelectNodes("//*[local-name()='$pType']")
+                    if ($pNodes) {
+                        foreach ($pNode in $pNodes) {
+                            $procId = $pNode.GetAttribute('id')
+                            if ($procId) { $definedProcs[$procId] = $pType }
+                        }
+                    }
+                }
+                $missingProcs = @()
+                $externalProcs = @()
+                $refNodes = $rules.SelectNodes("//*[@idRef]")
+                if ($refNodes) {
+                    foreach ($refNode in $refNodes) {
+                        if ($refNode.LocalName -eq 'Resource') { continue }
+                        $refId = $refNode.GetAttribute('idRef')
+                        if ($refId -and -not $definedProcs.ContainsKey($refId)) {
+                            if ($refId -match '^(CEP_|Func_|Keyword_)') {
+                                if ($refId -notin $externalProcs) { $externalProcs += $refId }
+                            } else {
+                                if ($refId -notin $missingProcs) { $missingProcs += $refId }
+                            }
+                        }
+                    }
+                }
+
+                if ($missingProcs.Count -gt 0) {
+                    Write-Host ""
+                    Write-Host "   ❌ WARNING: Missing text processor references detected!" -ForegroundColor Red
+                    foreach ($mp in $missingProcs) {
+                        Write-Host "      • $mp" -ForegroundColor Red
+                    }
+                    Write-Host "      This file will FAIL to import to another tenant." -ForegroundColor Red
+                    Write-Host "      Run: .\Validate-ExportXml.ps1 -XmlPath `"$file`"" -ForegroundColor Yellow
+                }
+                if ($externalProcs.Count -gt 0) {
+                    Write-Host "   ⚠️  External refs: $($externalProcs -join ', ')" -ForegroundColor Yellow
+                    Write-Host "      These reference Microsoft built-in processors." -ForegroundColor DarkGray
                 }
             } catch {
                 Write-Host "   (Could not parse XML summary)" -ForegroundColor DarkGray

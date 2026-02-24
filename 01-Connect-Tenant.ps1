@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Connect to Security & Compliance PowerShell
 
