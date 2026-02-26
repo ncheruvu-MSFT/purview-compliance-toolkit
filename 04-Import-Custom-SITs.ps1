@@ -235,6 +235,16 @@ if ($dictSidecars.Count -gt 0) {
     }
     Write-Host ""
 }
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 2: Validate text processor references (pre-import check)
+# ─────────────────────────────────────────────────────────────────────
+if (-not $SkipValidation) {
+    Write-Host "⏳ Step 2: Validating text processor references..." -ForegroundColor Yellow
+    Write-Host ""
+
+    $rules = $sourceXml.RulePackage.Rules
+
     $definedProcessors = @{}
     $processorTypes = @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword', 'Dictionary')
     
