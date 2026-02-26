@@ -147,7 +147,7 @@ if ($dictSidecars.Count -gt 0) {
         $sidecar = Get-Content $sidecarFile.FullName -Raw | ConvertFrom-Json
         $sourceId   = $sidecar.sourceIdentity
         $dictName   = $sidecar.name
-        $dictDesc   = $sidecar.description
+        $dictDesc   = if ([string]::IsNullOrWhiteSpace($sidecar.description)) { $dictName } else { $sidecar.description }
         $kwFile     = $sidecar.keywordsFile
         $kwFilePath = Join-Path $xmlDir $kwFile
         
@@ -198,6 +198,39 @@ if ($dictSidecars.Count -gt 0) {
         }
     }
     
+    # Check if any referenced dictionaries failed to create
+    $dictFailures = @()
+    foreach ($sf in $dictSidecars) {
+        $sc = Get-Content $sf.FullName -Raw | ConvertFrom-Json
+        $sid = $sc.sourceIdentity
+        # Only flag as failure if this dictionary is actually referenced in the XML
+        if ($sourceXml.OuterXml -match [regex]::Escape($sid)) {
+            if (-not $dictRemapTable.ContainsKey($sid)) {
+                $dictFailures += $sc.name
+            }
+        }
+    }
+
+    if ($dictFailures.Count -gt 0 -and -not $Force) {
+        Write-Host "" 
+        Write-Host "❌ Cannot proceed: $($dictFailures.Count) dictionary creation(s) failed" -ForegroundColor Red
+        foreach ($df in $dictFailures) {
+            Write-Host "   • $df" -ForegroundColor Red
+        }
+        Write-Host ""
+        Write-Host "   The XML references these dictionaries via idRef. Import will fail" -ForegroundColor Gray
+        Write-Host "   because the text processor GUIDs won't exist in the target tenant." -ForegroundColor Gray
+        Write-Host ""
+        Write-Host "   Fix options:" -ForegroundColor Yellow
+        Write-Host "   1. Fix the sidecar JSON (e.g. add a non-empty description)" -ForegroundColor Gray
+        Write-Host "   2. Manually create the keyword dictionary on the target tenant" -ForegroundColor Gray
+        Write-Host "   3. Use -Force to attempt import anyway (will likely fail)" -ForegroundColor Gray
+        exit 1
+    } elseif ($dictFailures.Count -gt 0) {
+        Write-Host ""
+        Write-Host "⚠️  $($dictFailures.Count) dictionary creation(s) failed, but -Force specified — continuing..." -ForegroundColor Yellow
+    }
+
     # Remap dictionary idRef GUIDs in the XML
     if ($dictRemapTable.Count -gt 0) {
         Write-Host ""

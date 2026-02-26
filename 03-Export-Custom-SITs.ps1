@@ -301,10 +301,12 @@ try {
             $keywords = $dictObj.KeywordDictionary
             $keywordLines = @($keywords -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ })
             
+            $dictDescription = if ([string]::IsNullOrWhiteSpace($dictObj.Description)) { $dictName } else { $dictObj.Description }
+
             $sidecar = @{
                 sourceIdentity = $dictId
                 name           = $dictName
-                description    = $dictObj.Description
+                description    = $dictDescription
                 keywordCount   = $keywordLines.Count
                 keywordsFile   = (Split-Path $dictTxtPath -Leaf)
                 exportedAt     = (Get-Date -Format 'o')
