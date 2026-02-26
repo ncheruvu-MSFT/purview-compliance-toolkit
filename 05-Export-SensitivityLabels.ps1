@@ -42,6 +42,15 @@ try {
     exit 1
 }
 
+# ── Helper: flatten location objects to simple name strings ────────────
+function Get-LocationNames {
+    param([array]$Locations)
+    if (-not $Locations) { return @() }
+    @($Locations | Where-Object { $_ -ne $null } | ForEach-Object {
+        if ($_ -is [string]) { $_ } else { $_.Name }
+    } | Where-Object { $_ -ne $null })
+}
+
 Write-Host "🏷️  Exporting sensitivity labels and label policies..." -ForegroundColor Cyan
 Write-Host ""
 
@@ -122,14 +131,14 @@ if ($policies.Count -eq 0) {
             Comment                 = $policy.Comment
             Enabled                 = -not $policy.Disabled
             Labels                  = @($policy.Labels)
-            ExchangeLocation        = @($policy.ExchangeLocation)
-            ExchangeLocationException = @($policy.ExchangeLocationException)
-            SharePointLocation      = @($policy.SharePointLocation)
-            SharePointLocationException = @($policy.SharePointLocationException)
-            OneDriveLocation        = @($policy.OneDriveLocation)
-            OneDriveLocationException = @($policy.OneDriveLocationException)
-            ModernGroupLocation     = @($policy.ModernGroupLocation)
-            ModernGroupLocationException = @($policy.ModernGroupLocationException)
+            ExchangeLocation        = @(Get-LocationNames $policy.ExchangeLocation)
+            ExchangeLocationException = @(Get-LocationNames $policy.ExchangeLocationException)
+            SharePointLocation      = @(Get-LocationNames $policy.SharePointLocation)
+            SharePointLocationException = @(Get-LocationNames $policy.SharePointLocationException)
+            OneDriveLocation        = @(Get-LocationNames $policy.OneDriveLocation)
+            OneDriveLocationException = @(Get-LocationNames $policy.OneDriveLocationException)
+            ModernGroupLocation     = @(Get-LocationNames $policy.ModernGroupLocation)
+            ModernGroupLocationException = @(Get-LocationNames $policy.ModernGroupLocationException)
             Settings                = $policy.Settings
             AdvancedSettings        = $policy.AdvancedSettings
         }

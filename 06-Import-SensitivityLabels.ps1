@@ -60,6 +60,33 @@ try {
     exit 1
 }
 
+# ── Helper: safe JSON import (handles case-conflicting keys from older exports) ─
+function ConvertFrom-JsonSafe {
+    param([string]$JsonText)
+    try {
+        return $JsonText | ConvertFrom-Json
+    } catch {
+        if ($_.Exception.Message -match 'different casing') {
+            # Remove numeric "value" keys that conflict with string "Value" in
+            # location objects from older exports (e.g. {"value":1,"Value":"Tenant"})
+            $cleaned = [regex]::Replace($JsonText, '"value"\s*:\s*\d+\s*,\s*', '')
+            return $cleaned | ConvertFrom-Json
+        }
+        throw
+    }
+}
+
+# ── Helper: extract location names from complex objects or strings ────
+function Get-LocationNames {
+    param([array]$Locations)
+    if (-not $Locations) { return @() }
+    @($Locations | Where-Object { $_ -ne $null } | ForEach-Object {
+        if ($_ -is [string]) { $_ }
+        elseif ($_ -is [hashtable]) { $_.Name }
+        else { $_.Name }
+    } | Where-Object { $_ -ne $null })
+}
+
 Write-Host "🏷️  Importing sensitivity labels to TARGET tenant..." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Labels file:   $LabelsFile" -ForegroundColor Gray
@@ -71,7 +98,7 @@ Write-Host ""
 # ─────────────────────────────────────────────────────────────────────
 Write-Host "⏳ Step 1: Loading label definitions..." -ForegroundColor Yellow
 
-$sourceLabels = Get-Content $LabelsFile -Raw | ConvertFrom-Json
+$sourceLabels = ConvertFrom-JsonSafe (Get-Content $LabelsFile -Raw)
 Write-Host "   📋 Found $($sourceLabels.Count) label(s) in export file" -ForegroundColor Gray
 
 $parentLabels = @($sourceLabels | Where-Object { -not $_.ParentId })
@@ -144,8 +171,9 @@ foreach ($label in $parentLabels) {
             } catch {
                 Write-Host "   ❌ $displayName — create failed: $($_.Exception.Message)" -ForegroundColor Red
             }
-        }
-    }
+        }    } else {
+        # WhatIf mode: map source GUID to itself so sub-labels can resolve parents
+        $guidMap[$label.Guid] = $label.Guid    }
 }
 Write-Host ""
 
@@ -222,7 +250,7 @@ if ($subLabels.Count -gt 0) {
 if ($PoliciesFile) {
     Write-Host "⏳ Step 4: Importing label policies..." -ForegroundColor Yellow
     
-    $sourcePolicies = Get-Content $PoliciesFile -Raw | ConvertFrom-Json
+    $sourcePolicies = ConvertFrom-JsonSafe (Get-Content $PoliciesFile -Raw)
     Write-Host "   📋 Found $($sourcePolicies.Count) policy(ies) in export file" -ForegroundColor Gray
     
     foreach ($policy in $sourcePolicies) {
@@ -258,15 +286,12 @@ if ($PoliciesFile) {
                         Labels = $targetLabels
                     }
                     if ($policy.Comment) { $newParams['Comment'] = $policy.Comment }
-                    if ($policy.ExchangeLocation -and $policy.ExchangeLocation.Count -gt 0) {
-                        $newParams['ExchangeLocation'] = $policy.ExchangeLocation
-                    }
-                    if ($policy.SharePointLocation -and $policy.SharePointLocation.Count -gt 0) {
-                        $newParams['SharePointLocation'] = $policy.SharePointLocation
-                    }
-                    if ($policy.ModernGroupLocation -and $policy.ModernGroupLocation.Count -gt 0) {
-                        $newParams['ModernGroupLocation'] = $policy.ModernGroupLocation
-                    }
+                    $exchLoc = Get-LocationNames $policy.ExchangeLocation
+                    if ($exchLoc.Count -gt 0) { $newParams['ExchangeLocation'] = $exchLoc }
+                    $spLoc = Get-LocationNames $policy.SharePointLocation
+                    if ($spLoc.Count -gt 0) { $newParams['SharePointLocation'] = $spLoc }
+                    $mgLoc = Get-LocationNames $policy.ModernGroupLocation
+                    if ($mgLoc.Count -gt 0) { $newParams['ModernGroupLocation'] = $mgLoc }
                     if ($policy.AdvancedSettings -and $policy.AdvancedSettings.Count -gt 0) {
                         $newParams['AdvancedSettings'] = $policy.AdvancedSettings
                     }

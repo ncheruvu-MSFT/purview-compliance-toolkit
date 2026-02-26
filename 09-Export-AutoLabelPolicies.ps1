@@ -40,6 +40,15 @@ try {
     exit 1
 }
 
+# ── Helper: flatten location objects to simple name strings ────────────
+function Get-LocationNames {
+    param([array]$Locations)
+    if (-not $Locations) { return @() }
+    @($Locations | Where-Object { $_ -ne $null } | ForEach-Object {
+        if ($_ -is [string]) { $_ } else { $_.Name }
+    } | Where-Object { $_ -ne $null })
+}
+
 Write-Host "🏷️  Exporting auto-labeling policies and rules..." -ForegroundColor Cyan
 Write-Host ""
 
@@ -77,12 +86,12 @@ if ($policies.Count -eq 0) {
             Mode                           = $policy.Mode
             Priority                       = $policy.Priority
             ApplySensitivityLabel          = $policy.ApplySensitivityLabel
-            ExchangeLocation               = @($policy.ExchangeLocation)
-            ExchangeLocationException      = @($policy.ExchangeLocationException)
-            SharePointLocation             = @($policy.SharePointLocation)
-            SharePointLocationException    = @($policy.SharePointLocationException)
-            OneDriveLocation               = @($policy.OneDriveLocation)
-            OneDriveLocationException      = @($policy.OneDriveLocationException)
+            ExchangeLocation               = @(Get-LocationNames $policy.ExchangeLocation)
+            ExchangeLocationException      = @(Get-LocationNames $policy.ExchangeLocationException)
+            SharePointLocation             = @(Get-LocationNames $policy.SharePointLocation)
+            SharePointLocationException    = @(Get-LocationNames $policy.SharePointLocationException)
+            OneDriveLocation               = @(Get-LocationNames $policy.OneDriveLocation)
+            OneDriveLocationException      = @(Get-LocationNames $policy.OneDriveLocationException)
             ExternalMailRightsManagementOwner = $policy.ExternalMailRightsManagementOwner
             OverwriteLabel                 = $policy.OverwriteLabel
             WhenCreated                    = $policy.WhenCreated

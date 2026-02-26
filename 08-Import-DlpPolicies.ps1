@@ -63,6 +63,31 @@ try {
     exit 1
 }
 
+# ── Helper: safe JSON import (handles case-conflicting keys from older exports) ─
+function ConvertFrom-JsonSafe {
+    param([string]$JsonText)
+    try {
+        return $JsonText | ConvertFrom-Json
+    } catch {
+        if ($_.Exception.Message -match 'different casing') {
+            $cleaned = [regex]::Replace($JsonText, '"value"\s*:\s*\d+\s*,\s*', '')
+            return $cleaned | ConvertFrom-Json
+        }
+        throw
+    }
+}
+
+# ── Helper: extract location names from complex objects or strings ────
+function Get-LocationNames {
+    param([array]$Locations)
+    if (-not $Locations) { return @() }
+    @($Locations | Where-Object { $_ -ne $null } | ForEach-Object {
+        if ($_ -is [string]) { $_ }
+        elseif ($_ -is [hashtable]) { $_.Name }
+        else { $_.Name }
+    } | Where-Object { $_ -ne $null })
+}
+
 Write-Host "🛡️  Importing DLP policies to TARGET tenant..." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Policies file: $PoliciesFile" -ForegroundColor Gray
@@ -75,12 +100,12 @@ Write-Host ""
 # ─────────────────────────────────────────────────────────────────────
 Write-Host "⏳ Step 1: Loading DLP policy definitions..." -ForegroundColor Yellow
 
-$sourcePolicies = Get-Content $PoliciesFile -Raw | ConvertFrom-Json
+$sourcePolicies = ConvertFrom-JsonSafe (Get-Content $PoliciesFile -Raw)
 Write-Host "   📋 Found $($sourcePolicies.Count) policy(ies) in export file" -ForegroundColor Gray
 
 $sourceRules = @()
 if ($RulesFile) {
-    $sourceRules = Get-Content $RulesFile -Raw | ConvertFrom-Json
+    $sourceRules = ConvertFrom-JsonSafe (Get-Content $RulesFile -Raw)
     Write-Host "   📋 Found $($sourceRules.Count) rule(s) in export file" -ForegroundColor Gray
 }
 Write-Host ""
@@ -131,27 +156,20 @@ foreach ($policy in $sourcePolicies) {
                 }
                 
                 # Build location parameters
-                if ($policy.ExchangeLocation -and $policy.ExchangeLocation.Count -gt 0) {
-                    $newParams['ExchangeLocation'] = $policy.ExchangeLocation
-                }
-                if ($policy.SharePointLocation -and $policy.SharePointLocation.Count -gt 0) {
-                    $newParams['SharePointLocation'] = $policy.SharePointLocation
-                }
-                if ($policy.OneDriveLocation -and $policy.OneDriveLocation.Count -gt 0) {
-                    $newParams['OneDriveLocation'] = $policy.OneDriveLocation
-                }
-                if ($policy.TeamsLocation -and $policy.TeamsLocation.Count -gt 0) {
-                    $newParams['TeamsLocation'] = $policy.TeamsLocation
-                }
-                if ($policy.EndpointDlpLocation -and $policy.EndpointDlpLocation.Count -gt 0) {
-                    $newParams['EndpointDlpLocation'] = $policy.EndpointDlpLocation
-                }
-                if ($policy.OnPremisesScannerDlpLocation -and $policy.OnPremisesScannerDlpLocation.Count -gt 0) {
-                    $newParams['OnPremisesScannerDlpLocation'] = $policy.OnPremisesScannerDlpLocation
-                }
-                if ($policy.ThirdPartyAppDlpLocation -and $policy.ThirdPartyAppDlpLocation.Count -gt 0) {
-                    $newParams['ThirdPartyAppDlpLocation'] = $policy.ThirdPartyAppDlpLocation
-                }
+                $exchLoc = Get-LocationNames $policy.ExchangeLocation
+                if ($exchLoc.Count -gt 0) { $newParams['ExchangeLocation'] = $exchLoc }
+                $spLoc = Get-LocationNames $policy.SharePointLocation
+                if ($spLoc.Count -gt 0) { $newParams['SharePointLocation'] = $spLoc }
+                $odLoc = Get-LocationNames $policy.OneDriveLocation
+                if ($odLoc.Count -gt 0) { $newParams['OneDriveLocation'] = $odLoc }
+                $teamsLoc = Get-LocationNames $policy.TeamsLocation
+                if ($teamsLoc.Count -gt 0) { $newParams['TeamsLocation'] = $teamsLoc }
+                $endpointLoc = Get-LocationNames $policy.EndpointDlpLocation
+                if ($endpointLoc.Count -gt 0) { $newParams['EndpointDlpLocation'] = $endpointLoc }
+                $onPremLoc = Get-LocationNames $policy.OnPremisesScannerDlpLocation
+                if ($onPremLoc.Count -gt 0) { $newParams['OnPremisesScannerDlpLocation'] = $onPremLoc }
+                $thirdPartyLoc = Get-LocationNames $policy.ThirdPartyAppDlpLocation
+                if ($thirdPartyLoc.Count -gt 0) { $newParams['ThirdPartyAppDlpLocation'] = $thirdPartyLoc }
                 
                 New-DlpCompliancePolicy @newParams -ErrorAction Stop
                 Write-Host "   ✅ $policyName (created)" -ForegroundColor Green

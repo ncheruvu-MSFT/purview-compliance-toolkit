@@ -45,6 +45,15 @@ try {
     exit 1
 }
 
+# ── Helper: flatten location objects to simple name strings ────────────
+function Get-LocationNames {
+    param([array]$Locations)
+    if (-not $Locations) { return @() }
+    @($Locations | Where-Object { $_ -ne $null } | ForEach-Object {
+        if ($_ -is [string]) { $_ } else { $_.Name }
+    } | Where-Object { $_ -ne $null })
+}
+
 Write-Host "🛡️  Exporting DLP compliance policies and rules..." -ForegroundColor Cyan
 Write-Host ""
 
@@ -88,20 +97,20 @@ if ($policies.Count -eq 0) {
             Type                           = $policy.Type
             Workload                       = $policy.Workload
             Priority                       = $policy.Priority
-            ExchangeLocation               = @($policy.ExchangeLocation)
-            ExchangeLocationException      = @($policy.ExchangeLocationException)
-            SharePointLocation             = @($policy.SharePointLocation)
-            SharePointLocationException    = @($policy.SharePointLocationException)
-            OneDriveLocation               = @($policy.OneDriveLocation)
-            OneDriveLocationException      = @($policy.OneDriveLocationException)
-            TeamsLocation                  = @($policy.TeamsLocation)
-            TeamsLocationException         = @($policy.TeamsLocationException)
-            EndpointDlpLocation            = @($policy.EndpointDlpLocation)
-            EndpointDlpLocationException   = @($policy.EndpointDlpLocationException)
-            OnPremisesScannerDlpLocation   = @($policy.OnPremisesScannerDlpLocation)
-            OnPremisesScannerDlpLocationException = @($policy.OnPremisesScannerDlpLocationException)
-            ThirdPartyAppDlpLocation       = @($policy.ThirdPartyAppDlpLocation)
-            ThirdPartyAppDlpLocationException = @($policy.ThirdPartyAppDlpLocationException)
+            ExchangeLocation               = @(Get-LocationNames $policy.ExchangeLocation)
+            ExchangeLocationException      = @(Get-LocationNames $policy.ExchangeLocationException)
+            SharePointLocation             = @(Get-LocationNames $policy.SharePointLocation)
+            SharePointLocationException    = @(Get-LocationNames $policy.SharePointLocationException)
+            OneDriveLocation               = @(Get-LocationNames $policy.OneDriveLocation)
+            OneDriveLocationException      = @(Get-LocationNames $policy.OneDriveLocationException)
+            TeamsLocation                  = @(Get-LocationNames $policy.TeamsLocation)
+            TeamsLocationException         = @(Get-LocationNames $policy.TeamsLocationException)
+            EndpointDlpLocation            = @(Get-LocationNames $policy.EndpointDlpLocation)
+            EndpointDlpLocationException   = @(Get-LocationNames $policy.EndpointDlpLocationException)
+            OnPremisesScannerDlpLocation   = @(Get-LocationNames $policy.OnPremisesScannerDlpLocation)
+            OnPremisesScannerDlpLocationException = @(Get-LocationNames $policy.OnPremisesScannerDlpLocationException)
+            ThirdPartyAppDlpLocation       = @(Get-LocationNames $policy.ThirdPartyAppDlpLocation)
+            ThirdPartyAppDlpLocationException = @(Get-LocationNames $policy.ThirdPartyAppDlpLocationException)
             ExchangeOnlineWorkload         = $policy.ExchangeOnlineWorkload
             SharePointOnlineWorkload       = $policy.SharePointOnlineWorkload
             OneDriveForBusinessWorkload    = $policy.OneDriveForBusinessWorkload
