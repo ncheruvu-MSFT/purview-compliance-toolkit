@@ -35,6 +35,8 @@ target-app-config.json
 
 # Exports (contains sensitive tenant data and patterns)
 exports/*.xml
+exports/*.json
+exports/*.txt
 exports/archive/*.xml
 exports/**/*.xml
 

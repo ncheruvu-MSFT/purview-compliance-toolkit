@@ -5,11 +5,18 @@
 .DESCRIPTION
     Imports custom SIT definitions from an XML file exported from source tenant.
     
+    If keyword dictionary sidecar files (exported by 03-Export-Custom-SITs.ps1)
+    are found alongside the XML, the script automatically:
+    1. Recreates the dictionaries on the target tenant
+    2. Remaps IdMatch idRef GUIDs from source to target dictionary identities
+    3. Imports the modified rule pack XML
+    
     Process:
     1. Validate the source XML (structure, text processor references, encoding)
-    2. Check for name conflicts with existing SITs in target tenant
-    3. Import the rule pack directly using New/Set-DlpSensitiveInformationTypeRulePackage
-    4. Verify the import succeeded
+    2. Detect and recreate keyword dictionaries (if sidecar files exist)
+    3. Check for name conflicts with existing SITs in target tenant
+    4. Import the rule pack directly using New/Set-DlpSensitiveInformationTypeRulePackage
+    5. Verify the import succeeded
 
 .PARAMETER SourceXmlPath
     Path to the XML file exported from source tenant
@@ -125,17 +132,111 @@ try {
 }
 
 # ─────────────────────────────────────────────────────────────────────
-# STEP 2: Validate text processor references (pre-import check)
+# STEP 1b: Detect & recreate keyword dictionaries (sidecar files)
 # ─────────────────────────────────────────────────────────────────────
-if (-not $SkipValidation) {
-    Write-Host "⏳ Step 2: Validating text processor references..." -ForegroundColor Yellow
+$dictRemapTable = @{}  # sourceGuid → targetGuid
+$xmlDir = Split-Path (Resolve-Path $SourceXmlPath).Path -Parent
+$dictSidecars = @(Get-ChildItem -Path $xmlDir -Filter 'dictionary-*.json' -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch '-keywords\.txt$' })
+
+if ($dictSidecars.Count -gt 0) {
+    Write-Host "⏳ Step 1b: Recreating keyword dictionaries on target..." -ForegroundColor Yellow
+    Write-Host "   Found $($dictSidecars.Count) dictionary sidecar file(s)" -ForegroundColor Gray
     Write-Host ""
     
-    $rules = $sourceXml.RulePackage.Rules
+    foreach ($sidecarFile in $dictSidecars) {
+        $sidecar = Get-Content $sidecarFile.FullName -Raw | ConvertFrom-Json
+        $sourceId   = $sidecar.sourceIdentity
+        $dictName   = $sidecar.name
+        $dictDesc   = $sidecar.description
+        $kwFile     = $sidecar.keywordsFile
+        $kwFilePath = Join-Path $xmlDir $kwFile
+        
+        Write-Host "   📖 Dictionary: $dictName" -ForegroundColor Cyan
+        Write-Host "      Source ID: $sourceId" -ForegroundColor Gray
+        
+        # Check if this dictionary idRef is actually used in the XML
+        $xmlString = $sourceXml.OuterXml
+        if ($xmlString -notmatch [regex]::Escape($sourceId)) {
+            Write-Host "      ℹ️  Not referenced in this XML file — skipping" -ForegroundColor DarkGray
+            continue
+        }
+        
+        # Check if dictionary already exists on this tenant
+        $existingDict = $null
+        try {
+            $existingDict = Get-DlpKeywordDictionary -Name $dictName -ErrorAction SilentlyContinue
+        } catch { }
+        
+        if ($existingDict) {
+            $targetId = $existingDict.Identity.ToString()
+            Write-Host "      ✅ Already exists on target (ID: $targetId)" -ForegroundColor Green
+            $dictRemapTable[$sourceId] = $targetId
+        } else {
+            # Create the dictionary from the keywords file
+            if (-not (Test-Path $kwFilePath)) {
+                Write-Host "      ❌ Keywords file not found: $kwFile" -ForegroundColor Red
+                continue
+            }
+            
+            $kwBytes = [System.IO.File]::ReadAllBytes($kwFilePath)
+            Write-Host "      ⏳ Creating dictionary ($($sidecar.keywordCount) keywords)..." -ForegroundColor Yellow
+            
+            try {
+                $newDict = New-DlpKeywordDictionary `
+                    -Name $dictName `
+                    -Description $dictDesc `
+                    -FileData $kwBytes `
+                    -ErrorAction Stop
+                
+                $targetId = $newDict.Identity.ToString()
+                Write-Host "      ✅ Created! Target ID: $targetId" -ForegroundColor Green
+                $dictRemapTable[$sourceId] = $targetId
+                Start-Sleep -Seconds 2
+            } catch {
+                Write-Host "      ❌ Failed: $($_.Exception.Message)" -ForegroundColor Red
+            }
+        }
+    }
     
-    # Collect all defined text processors in this rule pack
+    # Remap dictionary idRef GUIDs in the XML
+    if ($dictRemapTable.Count -gt 0) {
+        Write-Host ""
+        Write-Host "   🔄 Remapping $($dictRemapTable.Count) dictionary GUID(s) in XML..." -ForegroundColor Cyan
+        
+        foreach ($srcGuid in $dictRemapTable.Keys) {
+            $tgtGuid = $dictRemapTable[$srcGuid]
+            if ($srcGuid -ne $tgtGuid) {
+                # Find all idRef attributes that reference this dictionary
+                $refNodes = $sourceXml.SelectNodes("//*[@idRef='$srcGuid']")
+                $remapCount = 0
+                foreach ($node in $refNodes) {
+                    $node.SetAttribute('idRef', $tgtGuid)
+                    $remapCount++
+                }
+                Write-Host "      $srcGuid → $tgtGuid ($remapCount ref(s))" -ForegroundColor DarkCyan
+            } else {
+                Write-Host "      $srcGuid → same (already correct)" -ForegroundColor DarkGray
+            }
+        }
+        
+        # Write modified XML to a temp file for import
+        $modifiedXmlPath = Join-Path $env:TEMP "import-remapped-$(Get-Date -Format 'yyyyMMdd-HHmmss').xml"
+        $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+        $writerSettings = New-Object System.Xml.XmlWriterSettings
+        $writerSettings.Encoding = $utf8Bom
+        $writerSettings.Indent = $true
+        $writer = [System.Xml.XmlWriter]::Create($modifiedXmlPath, $writerSettings)
+        $sourceXml.Save($writer)
+        $writer.Close()
+        
+        # Override SourceXmlPath so subsequent steps use the remapped file
+        $SourceXmlPath = $modifiedXmlPath
+        Write-Host "      ✅ Remapped XML written to temp file" -ForegroundColor Green
+    }
+    Write-Host ""
+}
     $definedProcessors = @{}
-    $processorTypes = @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword')
+    $processorTypes = @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword', 'Dictionary')
     
     foreach ($pType in $processorTypes) {
         $nodes = $rules.SelectNodes("//*[local-name()='$pType']")
@@ -174,6 +275,9 @@ if (-not $SkipValidation) {
             # Check if it's a well-known built-in reference
             if ($refId -match '^(CEP_|Func_|Keyword_)') {
                 $externalRefs += $refId
+            } elseif ($dictRemapTable.ContainsKey($refId) -or $dictRemapTable.Values -contains $refId) {
+                # Dictionary ref — resolved via sidecar import
+                # (no inline processor expected)
             } else {
                 $missingRefs += $refId
             }

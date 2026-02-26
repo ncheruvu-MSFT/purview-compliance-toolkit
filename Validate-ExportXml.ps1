@@ -7,12 +7,11 @@
     SerializedClassificationRuleCollection (from Get-DlpSensitiveInformationTypeRulePackage).
 
     Key facts about the exported bytes:
-      - The API returns UTF-16 (LE) encoded XML with a BOM (0xFF 0xFE).
-      - The XML declaration reads: <?xml version="1.0" encoding="utf-16"?>
-      - Attempting to read with Get-Content -Encoding UTF8 will FAIL because
-        UTF-16 interleaves 0x00 (null) bytes between ASCII characters.
+      - The export script now converts API output to UTF-8 (with BOM).
+      - The XML declaration reads: <?xml version="1.0" encoding="utf-8"?>
+      - Legacy exports may still be UTF-16 LE (BOM: 0xFF 0xFE); both are supported.
       - Use [System.Xml.XmlDocument]::Load() which auto-detects encoding from
-        the XML declaration and BOM, or use Get-Content -Encoding Unicode.
+        the XML declaration and BOM.
 
 .PARAMETER XmlPath
     Path to one or more XML files to validate.
@@ -60,6 +59,7 @@ begin {
             ReferencedProcessors = @()
             MissingProcessors    = @()
             ExternalProcessors   = @()
+            DictionaryRefs       = @()
         }
 
         # --- Check file exists ---
@@ -184,7 +184,7 @@ begin {
 
             # --- Validate text processor references ---
             $definedProcs = @{}
-            $processorTypes = @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword')
+            $processorTypes = @('Regex', 'Keyword', 'Function', 'Fingerprint', 'ExtendedKeyword', 'Dictionary')
             foreach ($pType in $processorTypes) {
                 $pNodes = $rules.SelectNodes("//*[local-name()='$pType']")
                 if ($pNodes) {
@@ -217,6 +217,10 @@ begin {
                     if ($refId -match '^(CEP_|Func_|Keyword_)') {
                         $result.ExternalProcessors += $refId
                         $result.Warnings += "External text processor reference: '$refId' (built-in, may not exist in target tenant)"
+                    } elseif ($refId -match '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
+                        # GUID-shaped idRef — likely a keyword dictionary reference
+                        $result.DictionaryRefs += $refId
+                        $result.Warnings += "Possible keyword dictionary reference: '$refId' (external to XML, needs sidecar file for migration)"
                     } else {
                         $result.MissingProcessors += $refId
                         $result.Errors += "Missing text processor: '$refId' referenced by $($referencedProcs[$refId]) but not defined in XML"
@@ -260,8 +264,7 @@ process {
             Write-Host "   Encoding: $($result.Encoding)" -ForegroundColor Gray
 
             if ($result.Encoding -like "*UTF-8*") {
-                Write-Host "   ⚠️  Expected UTF-16 from SerializedClassificationRuleCollection" -ForegroundColor Yellow
-                Write-Host "      Import may still work, but verify the source." -ForegroundColor Yellow
+                Write-Host "   ℹ️  UTF-8 encoded (converted from API's native UTF-16 during export)" -ForegroundColor DarkGray
             }
 
             if ($result.Valid) {
@@ -306,6 +309,17 @@ process {
                     Write-Host "   the source including ALL rule packs." -ForegroundColor Yellow
                 }
 
+                if ($result.DictionaryRefs.Count -gt 0) {
+                    Write-Host ""
+                    Write-Host "   📖 Keyword dictionary references ($($result.DictionaryRefs.Count)):" -ForegroundColor DarkCyan
+                    foreach ($dr in $result.DictionaryRefs) {
+                        Write-Host "     • $dr" -ForegroundColor DarkCyan
+                    }
+                    Write-Host "   These reference keyword dictionaries (created via New-DlpKeywordDictionary)." -ForegroundColor Gray
+                    Write-Host "   Dictionary sidecar files must exist for migration (exported by 03-Export-Custom-SITs.ps1)." -ForegroundColor Gray
+                    Write-Host "   The import script (04-Import-Custom-SITs.ps1) will recreate them on the target." -ForegroundColor Gray
+                }
+
                 if ($result.ExternalProcessors.Count -gt 0) {
                     Write-Host ""
                     Write-Host "   ⚠️  External text processor references (built-in):" -ForegroundColor Yellow
@@ -316,8 +330,10 @@ process {
                     Write-Host "   Import will succeed ONLY if these exist in the target tenant." -ForegroundColor Gray
                 }
 
-                if ($result.MissingProcessors.Count -eq 0 -and $result.ExternalProcessors.Count -eq 0) {
+                if ($result.MissingProcessors.Count -eq 0 -and $result.ExternalProcessors.Count -eq 0 -and $result.DictionaryRefs.Count -eq 0) {
                     Write-Host "     ✅ All references are self-contained" -ForegroundColor Green
+                } elseif ($result.MissingProcessors.Count -eq 0) {
+                    Write-Host "     ✅ All references resolvable (dict refs via sidecar, externals via built-in)" -ForegroundColor Green
                 }
 
                 if ($result.Warnings.Count -gt 0) {
@@ -349,11 +365,10 @@ end {
 
     if ($failedFiles -gt 0) {
         Write-Host "💡 Common issues:" -ForegroundColor Yellow
-        Write-Host "   • 'hexadecimal value 0x00' → File is UTF-16 but was re-saved as UTF-8" -ForegroundColor Gray
+        Write-Host "   • 'hexadecimal value 0x00' → File is UTF-16 but was re-saved incorrectly" -ForegroundColor Gray
         Write-Host "   • 'Name cannot begin with . character' → Same encoding mismatch" -ForegroundColor Gray
         Write-Host "   • 'Missing text processor' → XML references undefined Regex/Keyword/Function" -ForegroundColor Gray
-        Write-Host '   • Fix encoding: re-export using raw bytes: [IO.File]::WriteAllBytes()' -ForegroundColor Gray
-        Write-Host "   • Do NOT use Get-Content -Encoding UTF8 to read/re-save these files" -ForegroundColor Gray
+        Write-Host '   • Fix encoding: re-export with the latest 03-Export-Custom-SITs.ps1 (outputs UTF-8)' -ForegroundColor Gray
         Write-Host "   • Fix text processors: include missing definitions or re-export all rule packs" -ForegroundColor Gray
     }
     else {
