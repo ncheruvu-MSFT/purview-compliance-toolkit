@@ -1,0 +1,126 @@
+# ═══════════════════════════════════════════════════════════════════
+# Purview Compliance Toolkit — Scheduled Backup (GitHub Actions)
+# ═══════════════════════════════════════════════════════════════════
+#
+# Runs a full backup of Purview compliance configuration on a schedule
+# and stores the backup as a workflow artifact.
+#
+# Prerequisites:
+#   1. App registration with Security & Compliance admin permissions
+#   2. Certificate (.pfx) uploaded as GitHub Actions secret
+#   3. Repository secrets configured (see below)
+#
+# Required secrets:
+#   AZURE_TENANT_ID       — Entra ID tenant ID
+#   AZURE_CLIENT_ID       — App registration client ID
+#   PURVIEW_CERT_BASE64   — Base64-encoded .pfx certificate
+#   PURVIEW_CERT_PASSWORD  — Certificate password (optional if no password)
+#
+# ═══════════════════════════════════════════════════════════════════
+
+name: Purview Backup
+
+on:
+  schedule:
+    # Run every Sunday at 02:00 UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      skip_sits:
+        description: 'Skip custom SIT export'
+        type: boolean
+        default: false
+      skip_labels:
+        description: 'Skip sensitivity label export'
+        type: boolean
+        default: false
+      skip_dlp:
+        description: 'Skip DLP policy export'
+        type: boolean
+        default: false
+      skip_auto_label:
+        description: 'Skip auto-labeling policy export'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  BACKUP_RETENTION_DAYS: 90
+
+jobs:
+  backup:
+    name: Backup Purview Configuration
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ExchangeOnlineManagement module
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name ExchangeOnlineManagement -MinimumVersion 3.0.0 -Force -Scope CurrentUser
+          Import-Module ExchangeOnlineManagement
+          Write-Host "✅ ExchangeOnlineManagement $(( Get-Module ExchangeOnlineManagement).Version) installed"
+
+      - name: Import certificate
+        shell: pwsh
+        run: |
+          $certBytes = [Convert]::FromBase64String("${{ secrets.PURVIEW_CERT_BASE64 }}")
+          $certPath = Join-Path $env:RUNNER_TEMP "purview-cert.pfx"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+          
+          $certPassword = "${{ secrets.PURVIEW_CERT_PASSWORD }}"
+          if ($certPassword) {
+            $securePassword = ConvertTo-SecureString $certPassword -AsPlainText -Force
+            $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+          } else {
+            $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+          }
+          
+          Write-Host "✅ Certificate imported: $($cert.Thumbprint)"
+          echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+          
+          # Clean up cert file
+          Remove-Item $certPath -Force
+
+      - name: Connect to Security & Compliance
+        shell: pwsh
+        run: |
+          Connect-IPPSSession `
+            -AppId "${{ secrets.AZURE_CLIENT_ID }}" `
+            -CertificateThumbprint $env:CERT_THUMBPRINT `
+            -Organization "${{ secrets.AZURE_TENANT_ID }}"
+          
+          # Verify connection
+          $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
+          Write-Host "✅ Connected to Security & Compliance PowerShell"
+
+      - name: Run full backup
+        shell: pwsh
+        run: |
+          $params = @{}
+          if ('${{ inputs.skip_sits }}' -eq 'true')       { $params['SkipSITs'] = $true }
+          if ('${{ inputs.skip_labels }}' -eq 'true')      { $params['SkipLabels'] = $true }
+          if ('${{ inputs.skip_dlp }}' -eq 'true')         { $params['SkipDLP'] = $true }
+          if ('${{ inputs.skip_auto_label }}' -eq 'true')  { $params['SkipAutoLabel'] = $true }
+          
+          .\Backup-PurviewConfig.ps1 @params
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: purview-backup-${{ github.run_number }}
+          path: exports/backup-*/
+          retention-days: ${{ env.BACKUP_RETENTION_DAYS }}
+
+      - name: Disconnect session
+        if: always()
+        shell: pwsh
+        run: |
+          Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
+          Write-Host "✅ Session disconnected"

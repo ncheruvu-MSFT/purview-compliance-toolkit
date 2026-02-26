@@ -1,0 +1,124 @@
+# ═══════════════════════════════════════════════════════════════════
+# Purview Compliance Toolkit — Scheduled Backup (Azure DevOps)
+# ═══════════════════════════════════════════════════════════════════
+#
+# Runs a full backup of Purview compliance configuration on a schedule
+# and publishes the backup as a pipeline artifact.
+#
+# Prerequisites:
+#   1. App registration with Security & Compliance admin permissions
+#   2. Certificate uploaded to Azure Key Vault or as a secure file
+#   3. Pipeline variables configured (see below)
+#
+# Required pipeline variables (mark as secret where noted):
+#   AZURE_TENANT_ID        — Entra ID tenant ID
+#   AZURE_CLIENT_ID        — App registration client ID
+#   PURVIEW_CERT_BASE64    — Base64-encoded .pfx certificate   [secret]
+#   PURVIEW_CERT_PASSWORD  — Certificate password              [secret]
+#
+# ═══════════════════════════════════════════════════════════════════
+
+trigger: none
+
+schedules:
+  - cron: '0 2 * * 0'    # Every Sunday at 02:00 UTC
+    displayName: Weekly Purview Backup
+    branches:
+      include:
+        - main
+    always: true
+
+parameters:
+  - name: skipSITs
+    displayName: Skip custom SIT export
+    type: boolean
+    default: false
+  - name: skipLabels
+    displayName: Skip sensitivity label export
+    type: boolean
+    default: false
+  - name: skipDLP
+    displayName: Skip DLP policy export
+    type: boolean
+    default: false
+  - name: skipAutoLabel
+    displayName: Skip auto-labeling policy export
+    type: boolean
+    default: false
+
+pool:
+  vmImage: 'windows-latest'
+
+steps:
+  - task: PowerShell@2
+    displayName: Install ExchangeOnlineManagement module
+    inputs:
+      targetType: inline
+      pwsh: true
+      script: |
+        Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+        Install-Module -Name ExchangeOnlineManagement -MinimumVersion 3.0.0 -Force -Scope CurrentUser
+        Import-Module ExchangeOnlineManagement
+        Write-Host "##[section]ExchangeOnlineManagement $((Get-Module ExchangeOnlineManagement).Version) installed"
+
+  - task: PowerShell@2
+    displayName: Import certificate and connect
+    inputs:
+      targetType: inline
+      pwsh: true
+      script: |
+        # Import certificate
+        $certBytes = [Convert]::FromBase64String("$(PURVIEW_CERT_BASE64)")
+        $certPath = Join-Path $env:AGENT_TEMPDIRECTORY "purview-cert.pfx"
+        [IO.File]::WriteAllBytes($certPath, $certBytes)
+        
+        $certPassword = "$(PURVIEW_CERT_PASSWORD)"
+        if ($certPassword) {
+          $securePassword = ConvertTo-SecureString $certPassword -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+        } else {
+          $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+        }
+        
+        Remove-Item $certPath -Force
+        Write-Host "##[section]Certificate imported: $($cert.Thumbprint)"
+        
+        # Connect to Security & Compliance
+        Connect-IPPSSession `
+          -AppId "$(AZURE_CLIENT_ID)" `
+          -CertificateThumbprint $cert.Thumbprint `
+          -Organization "$(AZURE_TENANT_ID)"
+        
+        $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
+        Write-Host "##[section]Connected to Security & Compliance PowerShell"
+
+  - task: PowerShell@2
+    displayName: Run full backup
+    inputs:
+      targetType: inline
+      pwsh: true
+      workingDirectory: $(Build.SourcesDirectory)
+      script: |
+        $params = @{}
+        if ('${{ parameters.skipSITs }}' -eq 'True')       { $params['SkipSITs'] = $true }
+        if ('${{ parameters.skipLabels }}' -eq 'True')      { $params['SkipLabels'] = $true }
+        if ('${{ parameters.skipDLP }}' -eq 'True')         { $params['SkipDLP'] = $true }
+        if ('${{ parameters.skipAutoLabel }}' -eq 'True')  { $params['SkipAutoLabel'] = $true }
+        
+        .\Backup-PurviewConfig.ps1 @params
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish backup artifact
+    inputs:
+      targetPath: $(Build.SourcesDirectory)/exports/backup-*
+      artifactName: purview-backup-$(Build.BuildNumber)
+
+  - task: PowerShell@2
+    displayName: Disconnect session
+    condition: always()
+    inputs:
+      targetType: inline
+      pwsh: true
+      script: |
+        Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
+        Write-Host "##[section]Session disconnected"

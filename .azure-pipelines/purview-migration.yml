@@ -1,0 +1,204 @@
+# ═══════════════════════════════════════════════════════════════════
+# Purview Compliance Toolkit — Tenant Migration (Azure DevOps)
+# ═══════════════════════════════════════════════════════════════════
+#
+# Exports compliance config from source tenant & imports to target.
+# Designed for environment replication (dev → staging → prod) or
+# tenant-to-tenant migration.
+#
+# Required pipeline variables (mark as secret where noted):
+#   SOURCE_TENANT_ID       — Source Entra ID tenant ID
+#   SOURCE_CLIENT_ID       — Source app registration client ID
+#   SOURCE_CERT_BASE64     — Source certificate (base64 .pfx)  [secret]
+#   SOURCE_CERT_PASSWORD   — Source cert password              [secret]
+#   TARGET_TENANT_ID       — Target Entra ID tenant ID
+#   TARGET_CLIENT_ID       — Target app registration client ID
+#   TARGET_CERT_BASE64     — Target certificate (base64 .pfx)  [secret]
+#   TARGET_CERT_PASSWORD   — Target cert password              [secret]
+#
+# ═══════════════════════════════════════════════════════════════════
+
+trigger: none
+
+parameters:
+  - name: components
+    displayName: Components to migrate
+    type: string
+    default: all
+    values:
+      - all
+      - sits-only
+      - labels-only
+      - dlp-only
+      - auto-label-only
+  - name: testMode
+    displayName: Import in test mode (DLP/auto-label only)
+    type: boolean
+    default: true
+  - name: skipExisting
+    displayName: Skip items that already exist on target
+    type: boolean
+    default: false
+
+stages:
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 1: Export from Source Tenant
+  # ─────────────────────────────────────────────────────────────────
+  - stage: Export
+    displayName: Export from Source
+    pool:
+      vmImage: 'windows-latest'
+    jobs:
+      - job: ExportJob
+        displayName: Export Compliance Config
+        timeoutInMinutes: 30
+        steps:
+          - checkout: self
+
+          - task: PowerShell@2
+            displayName: Install ExchangeOnlineManagement
+            inputs:
+              targetType: inline
+              pwsh: true
+              script: |
+                Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+                Install-Module -Name ExchangeOnlineManagement -MinimumVersion 3.0.0 -Force -Scope CurrentUser
+
+          - task: PowerShell@2
+            displayName: Connect to source & export
+            inputs:
+              targetType: inline
+              pwsh: true
+              workingDirectory: $(Build.SourcesDirectory)
+              script: |
+                # Import certificate
+                $certBytes = [Convert]::FromBase64String("$(SOURCE_CERT_BASE64)")
+                $certPath = Join-Path $env:AGENT_TEMPDIRECTORY "source-cert.pfx"
+                [IO.File]::WriteAllBytes($certPath, $certBytes)
+                
+                $certPassword = "$(SOURCE_CERT_PASSWORD)"
+                if ($certPassword) {
+                  $securePassword = ConvertTo-SecureString $certPassword -AsPlainText -Force
+                  $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+                } else {
+                  $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+                }
+                Remove-Item $certPath -Force
+                
+                # Connect
+                Connect-IPPSSession `
+                  -AppId "$(SOURCE_CLIENT_ID)" `
+                  -CertificateThumbprint $cert.Thumbprint `
+                  -Organization "$(SOURCE_TENANT_ID)"
+                
+                $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
+                Write-Host "##[section]Connected to source tenant"
+                
+                # Build params
+                $params = @{}
+                $component = '${{ parameters.components }}'
+                if ($component -ne 'all') {
+                  $params['SkipSITs']      = ($component -ne 'sits-only')
+                  $params['SkipLabels']    = ($component -ne 'labels-only')
+                  $params['SkipDLP']       = ($component -ne 'dlp-only')
+                  $params['SkipAutoLabel'] = ($component -ne 'auto-label-only')
+                }
+                
+                .\Backup-PurviewConfig.ps1 @params
+                
+                Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish export artifact
+            inputs:
+              targetPath: $(Build.SourcesDirectory)/exports/backup-*
+              artifactName: migration-export
+
+  # ─────────────────────────────────────────────────────────────────
+  # Stage 2: Import to Target Tenant
+  # ─────────────────────────────────────────────────────────────────
+  - stage: Import
+    displayName: Import to Target
+    dependsOn: Export
+    pool:
+      vmImage: 'windows-latest'
+    jobs:
+      - deployment: ImportJob
+        displayName: Import Compliance Config
+        timeoutInMinutes: 30
+        environment: purview-target
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download export artifact
+                  inputs:
+                    artifactName: migration-export
+                    targetPath: $(Build.SourcesDirectory)/exports
+
+                - task: PowerShell@2
+                  displayName: Install ExchangeOnlineManagement
+                  inputs:
+                    targetType: inline
+                    pwsh: true
+                    script: |
+                      Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+                      Install-Module -Name ExchangeOnlineManagement -MinimumVersion 3.0.0 -Force -Scope CurrentUser
+
+                - task: PowerShell@2
+                  displayName: Connect to target & import
+                  inputs:
+                    targetType: inline
+                    pwsh: true
+                    workingDirectory: $(Build.SourcesDirectory)
+                    script: |
+                      # Import certificate
+                      $certBytes = [Convert]::FromBase64String("$(TARGET_CERT_BASE64)")
+                      $certPath = Join-Path $env:AGENT_TEMPDIRECTORY "target-cert.pfx"
+                      [IO.File]::WriteAllBytes($certPath, $certBytes)
+                      
+                      $certPassword = "$(TARGET_CERT_PASSWORD)"
+                      if ($certPassword) {
+                        $securePassword = ConvertTo-SecureString $certPassword -AsPlainText -Force
+                        $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+                      } else {
+                        $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+                      }
+                      Remove-Item $certPath -Force
+                      
+                      # Connect
+                      Connect-IPPSSession `
+                        -AppId "$(TARGET_CLIENT_ID)" `
+                        -CertificateThumbprint $cert.Thumbprint `
+                        -Organization "$(TARGET_TENANT_ID)"
+                      
+                      $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
+                      Write-Host "##[section]Connected to target tenant"
+                      
+                      # Find backup directory
+                      $backupDir = Get-ChildItem -Path "$(Build.SourcesDirectory)/exports" -Directory -Filter "backup-*" |
+                                   Sort-Object Name -Descending | Select-Object -First 1
+                      
+                      # Build params
+                      $params = @{
+                        BackupPath = $backupDir.FullName
+                        Force      = $true
+                      }
+                      
+                      $component = '${{ parameters.components }}'
+                      if ($component -ne 'all') {
+                        $params['SkipSITs']      = ($component -ne 'sits-only')
+                        $params['SkipLabels']    = ($component -ne 'labels-only')
+                        $params['SkipDLP']       = ($component -ne 'dlp-only')
+                        $params['SkipAutoLabel'] = ($component -ne 'auto-label-only')
+                      }
+                      
+                      if ('${{ parameters.testMode }}' -eq 'True')     { $params['TestMode'] = $true }
+                      if ('${{ parameters.skipExisting }}' -eq 'True') { $params['SkipExisting'] = $true }
+                      
+                      .\Restore-PurviewConfig.ps1 @params
+                      
+                      Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue

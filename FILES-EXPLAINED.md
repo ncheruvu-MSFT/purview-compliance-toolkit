@@ -1,8 +1,8 @@
 # 📦 Toolkit Files - Quick Reference
 
-## ✅ Current Files: 22 Total
+## ✅ Current Files
 
-### 🎯 CORE WORKFLOW (6 files) - **YOU NEED THESE**
+### 🎯 CORE WORKFLOW — SIT Migration (6 files)
 
 | File | Purpose | When to Use |
 |------|---------|-------------|
@@ -12,7 +12,53 @@
 | `03-Export-Custom-SITs.ps1` | Export SITs from source tenant | Source tenant only |
 | `04-Import-Custom-SITs.ps1` | Import SITs to target tenant | Target tenant only |
 | `Validate-ExportXml.ps1` | Validate/preview exported XML (encoding, structure) | After export, before import |
-| `Verify-Security.ps1` | Check for sensitive files before commit | Before `git commit` |
+
+---
+
+### 🏷️ SENSITIVITY LABELS (2 files)
+
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| `05-Export-SensitivityLabels.ps1` | Export labels + label policies to JSON | Source tenant — backup/migration |
+| `06-Import-SensitivityLabels.ps1` | Import labels + policies from JSON | Target tenant — restore/migration |
+
+---
+
+### 🛡️ DLP POLICIES (2 files)
+
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| `07-Export-DlpPolicies.ps1` | Export DLP policies + rules to JSON | Source tenant — backup/migration |
+| `08-Import-DlpPolicies.ps1` | Import DLP policies + rules from JSON | Target tenant — supports `-TestMode` |
+
+---
+
+### 🏷️ AUTO-LABELING POLICIES (2 files)
+
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| `09-Export-AutoLabelPolicies.ps1` | Export auto-labeling policies + rules to JSON | Source tenant — backup/migration |
+| `10-Import-AutoLabelPolicies.ps1` | Import auto-labeling policies + rules from JSON | Target tenant — supports `-TestMode` |
+
+---
+
+### 📦 ORCHESTRATORS (2 files)
+
+| File | Purpose | When to Use |
+|------|---------|-------------|
+| `Backup-PurviewConfig.ps1` | Full backup — runs all exports, writes manifest | One-command backup |
+| `Restore-PurviewConfig.ps1` | Full restore — reads manifest, runs all imports | One-command restore |
+
+---
+
+### 🔄 CI/CD PIPELINES (4 files)
+
+| File | Purpose |
+|------|---------|
+| `.github/workflows/purview-backup.yml` | GitHub Actions — scheduled weekly backup |
+| `.github/workflows/purview-migration.yml` | GitHub Actions — on-demand tenant migration |
+| `.azure-pipelines/purview-backup.yml` | Azure DevOps — scheduled backup pipeline |
+| `.azure-pipelines/purview-migration.yml` | Azure DevOps — two-stage migration pipeline |
 
 ---
 
@@ -25,6 +71,7 @@
 | `99-Test-Migration-Loop.ps1` | Test export/import on same tenant | Only for validation |
 | `Sample-Automated-Migration.ps1` | Full automation example | Template for building your own |
 | `Test-Toolkit.ps1` | Run all validation tests | Dev/QA use only |
+| `Verify-Security.ps1` | Check for sensitive files before commit | Security audit |
 
 ---
 

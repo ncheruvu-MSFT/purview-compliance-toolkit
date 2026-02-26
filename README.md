@@ -1,6 +1,20 @@
-# Purview SIT Migration Toolkit
+# Purview Compliance Toolkit
 
-This toolkit automates the migration of Custom Sensitive Information Types (SITs) between Microsoft 365 tenants.
+A comprehensive toolkit for **backup, restore, and migration** of Microsoft Purview compliance configurations between Microsoft 365 tenants.
+
+## Supported Configuration Types
+
+| Component | Export | Import | Script Pair |
+|-----------|--------|--------|-------------|
+| Custom Sensitive Information Types (SITs) | ✅ | ✅ | `03` / `04` |
+| Sensitivity Labels & Policies | ✅ | ✅ | `05` / `06` |
+| DLP Compliance Policies & Rules | ✅ | ✅ | `07` / `08` |
+| Auto-Labeling Policies & Rules | ✅ | ✅ | `09` / `10` |
+| Insider Risk Management | ⚠️ | ⚠️ | Not yet available (cmdlets not publicly documented) |
+
+> **Orchestrators**: Use `Backup-PurviewConfig.ps1` and `Restore-PurviewConfig.ps1` for full configuration backup/restore in a single command.
+
+> **CI/CD**: GitHub Actions and Azure DevOps pipeline definitions included for scheduled backups and automated migrations.
 
 > 🔒 **SECURITY**: This repo is secured with comprehensive `.gitignore` rules. All certificates, configs, and export data are protected. **[Security Status →](REPOSITORY-SECURITY.md)** | **[Security Guidelines →](SECURITY.md)**
 
@@ -233,6 +247,82 @@ Import the exported XML file into the target tenant.
 
 ---
 
+## 📦 Full Backup & Restore
+
+### One-Command Backup
+Export all compliance configuration from the connected tenant:
+```powershell
+.\01-Connect-Tenant.ps1
+.\Backup-PurviewConfig.ps1
+```
+*   Output: Timestamped backup folder in `exports/backup-<timestamp>/`
+*   Includes: SIT rule packs, sensitivity labels, DLP policies, auto-labeling policies
+*   Creates a `backup-manifest.json` linking all exported files
+
+### One-Command Restore
+Restore a full backup to the target tenant:
+```powershell
+.\01-Connect-Tenant.ps1 -TenantType Target
+.\Restore-PurviewConfig.ps1 -BackupPath ".\exports\backup-20260226-120000"
+```
+
+### Selective Backup/Restore
+Skip specific components with flags:
+```powershell
+# Backup only labels and DLP
+.\Backup-PurviewConfig.ps1 -SkipSITs -SkipAutoLabel
+
+# Restore DLP in test mode, skip existing items
+.\Restore-PurviewConfig.ps1 -BackupPath ".\exports\backup-20260226-120000" -TestMode -SkipExisting
+```
+
+---
+
+## 🏷️ Individual Component Scripts
+
+### Sensitivity Labels (05/06)
+```powershell
+# Export labels and label policies
+.\05-Export-SensitivityLabels.ps1
+
+# Import to target tenant
+.\06-Import-SensitivityLabels.ps1 -LabelsFile ".\exports\labels-export-*.json" -PoliciesFile ".\exports\label-policies-export-*.json"
+```
+
+### DLP Policies (07/08)
+```powershell
+# Export DLP policies and rules
+.\07-Export-DlpPolicies.ps1
+
+# Import to target (test mode recommended first)
+.\08-Import-DlpPolicies.ps1 -PoliciesFile ".\exports\dlp-policies-export-*.json" -RulesFile ".\exports\dlp-rules-export-*.json" -TestMode
+```
+
+### Auto-Labeling Policies (09/10)
+```powershell
+# Export auto-labeling policies and rules
+.\09-Export-AutoLabelPolicies.ps1
+
+# Import to target
+.\10-Import-AutoLabelPolicies.ps1 -PoliciesFile ".\exports\auto-label-policies-export-*.json" -RulesFile ".\exports\auto-label-rules-export-*.json"
+```
+
+---
+
+## 🔄 CI/CD Pipelines
+
+### GitHub Actions
+- **`.github/workflows/purview-backup.yml`** — Scheduled weekly backup (Sunday 02:00 UTC) with manual trigger
+- **`.github/workflows/purview-migration.yml`** — On-demand source→target migration with component selection
+
+### Azure DevOps
+- **`.azure-pipelines/purview-backup.yml`** — Scheduled backup with artifact publishing
+- **`.azure-pipelines/purview-migration.yml`** — Two-stage migration (Export → Import) with environment approval
+
+**Required Secrets/Variables:** See pipeline YAML headers for the list of secrets needed (tenant IDs, client IDs, base64-encoded certificates).
+
+---
+
 ## 🧪 Testing & Validation
 
 ### End-to-End Migration Loop
@@ -258,8 +348,17 @@ This script will:
 *   **`00a-Test-AppConnection.ps1`**: Tests the app-only authentication connection.
 *   **`00-Verify-Connection.ps1`**: Verifies connection and lists existing custom SITs.
 
+### Orchestrators
+*   **`Backup-PurviewConfig.ps1`**: Full backup orchestrator — runs all export scripts and writes a backup manifest.
+*   **`Restore-PurviewConfig.ps1`**: Full restore orchestrator — reads backup manifest and runs all import scripts in dependency order.
+
 ### Testing & Development
 *   **`02-Create-Sample-SITs.ps1`**: (Optional) Creates dummy data for testing purposes. Not required for actual migration.
+
+### ⚠️ Known Limitations
+*   **Insider Risk Management** — `Get-InsiderRiskPolicy` and related cmdlets are not publicly documented in the Security & Compliance PowerShell module. Manual portal-based backup or future Microsoft API support required.
+*   **Label encryption settings** — Re-creating labels with Azure RMS encryption requires the target tenant to have the same Azure RMS configuration. Encryption settings are exported for reference but may need manual configuration.
+*   **Label/policy propagation** — Sensitivity labels and their policies may take up to 24 hours to propagate to all users and services after import.
 
 ---
 

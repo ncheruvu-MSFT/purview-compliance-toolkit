@@ -1,0 +1,214 @@
+# ═══════════════════════════════════════════════════════════════════
+# Purview Compliance Toolkit — Tenant Migration (GitHub Actions)
+# ═══════════════════════════════════════════════════════════════════
+#
+# Exports compliance config from source tenant and imports to target.
+# Designed for environment replication (dev → staging → prod) or
+# tenant-to-tenant migration.
+#
+# Prerequisites:
+#   1. App registrations on BOTH source and target tenants
+#   2. Certificates uploaded as GitHub Actions secrets
+#   3. Repository secrets configured (see below)
+#
+# Required secrets:
+#   SOURCE_TENANT_ID       — Source Entra ID tenant ID
+#   SOURCE_CLIENT_ID       — Source app registration client ID
+#   SOURCE_CERT_BASE64     — Source certificate (base64 .pfx)
+#   SOURCE_CERT_PASSWORD   — Source certificate password
+#   TARGET_TENANT_ID       — Target Entra ID tenant ID
+#   TARGET_CLIENT_ID       — Target app registration client ID
+#   TARGET_CERT_BASE64     — Target certificate (base64 .pfx)
+#   TARGET_CERT_PASSWORD   — Target certificate password
+#
+# ═══════════════════════════════════════════════════════════════════
+
+name: Purview Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      components:
+        description: 'Components to migrate'
+        type: choice
+        options:
+          - all
+          - sits-only
+          - labels-only
+          - dlp-only
+          - auto-label-only
+        default: all
+      test_mode:
+        description: 'Import in test mode (DLP/auto-label only)'
+        type: boolean
+        default: true
+      skip_existing:
+        description: 'Skip items that already exist on target'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    name: Export from Source Tenant
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ExchangeOnlineManagement module
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name ExchangeOnlineManagement -MinimumVersion 3.0.0 -Force -Scope CurrentUser
+
+      - name: Import source certificate
+        shell: pwsh
+        run: |
+          $certBytes = [Convert]::FromBase64String("${{ secrets.SOURCE_CERT_BASE64 }}")
+          $certPath = Join-Path $env:RUNNER_TEMP "source-cert.pfx"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+          
+          $certPassword = "${{ secrets.SOURCE_CERT_PASSWORD }}"
+          if ($certPassword) {
+            $securePassword = ConvertTo-SecureString $certPassword -AsPlainText -Force
+            $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+          } else {
+            $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+          }
+          
+          echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+          Remove-Item $certPath -Force
+
+      - name: Connect to source tenant
+        shell: pwsh
+        run: |
+          Connect-IPPSSession `
+            -AppId "${{ secrets.SOURCE_CLIENT_ID }}" `
+            -CertificateThumbprint $env:CERT_THUMBPRINT `
+            -Organization "${{ secrets.SOURCE_TENANT_ID }}"
+          
+          $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
+          Write-Host "✅ Connected to source tenant"
+
+      - name: Export from source
+        shell: pwsh
+        run: |
+          $params = @{}
+          $component = '${{ inputs.components }}'
+          
+          if ($component -ne 'all') {
+            if ($component -ne 'sits-only')       { $params['SkipSITs'] = $true }
+            if ($component -ne 'labels-only')      { $params['SkipLabels'] = $true }
+            if ($component -ne 'dlp-only')         { $params['SkipDLP'] = $true }
+            if ($component -ne 'auto-label-only')  { $params['SkipAutoLabel'] = $true }
+            
+            # Re-enable the selected component
+            switch ($component) {
+              'sits-only'       { $params.Remove('SkipSITs') }
+              'labels-only'     { $params.Remove('SkipLabels') }
+              'dlp-only'        { $params.Remove('SkipDLP') }
+              'auto-label-only' { $params.Remove('SkipAutoLabel') }
+            }
+          }
+          
+          .\Backup-PurviewConfig.ps1 @params
+
+      - name: Disconnect source
+        if: always()
+        shell: pwsh
+        run: Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
+
+      - name: Upload export artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-export
+          path: exports/backup-*/
+          retention-days: 7
+
+  import:
+    name: Import to Target Tenant
+    needs: export
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install ExchangeOnlineManagement module
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name ExchangeOnlineManagement -MinimumVersion 3.0.0 -Force -Scope CurrentUser
+
+      - name: Download export artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: migration-export
+          path: exports/
+
+      - name: Find backup directory
+        shell: pwsh
+        run: |
+          $backupDir = Get-ChildItem -Path exports -Directory -Filter "backup-*" | 
+                       Sort-Object Name -Descending | Select-Object -First 1
+          echo "BACKUP_PATH=$($backupDir.FullName)" >> $env:GITHUB_ENV
+          Write-Host "📁 Backup directory: $($backupDir.FullName)"
+
+      - name: Import target certificate
+        shell: pwsh
+        run: |
+          $certBytes = [Convert]::FromBase64String("${{ secrets.TARGET_CERT_BASE64 }}")
+          $certPath = Join-Path $env:RUNNER_TEMP "target-cert.pfx"
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+          
+          $certPassword = "${{ secrets.TARGET_CERT_PASSWORD }}"
+          if ($certPassword) {
+            $securePassword = ConvertTo-SecureString $certPassword -AsPlainText -Force
+            $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My -Password $securePassword
+          } else {
+            $cert = Import-PfxCertificate -FilePath $certPath -CertStoreLocation Cert:\CurrentUser\My
+          }
+          
+          echo "CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+          Remove-Item $certPath -Force
+
+      - name: Connect to target tenant
+        shell: pwsh
+        run: |
+          Connect-IPPSSession `
+            -AppId "${{ secrets.TARGET_CLIENT_ID }}" `
+            -CertificateThumbprint $env:CERT_THUMBPRINT `
+            -Organization "${{ secrets.TARGET_TENANT_ID }}"
+          
+          $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
+          Write-Host "✅ Connected to target tenant"
+
+      - name: Import to target
+        shell: pwsh
+        run: |
+          $params = @{ BackupPath = $env:BACKUP_PATH }
+          
+          $component = '${{ inputs.components }}'
+          if ($component -ne 'all') {
+            $params['SkipSITs']      = ($component -ne 'sits-only')
+            $params['SkipLabels']    = ($component -ne 'labels-only')
+            $params['SkipDLP']       = ($component -ne 'dlp-only')
+            $params['SkipAutoLabel'] = ($component -ne 'auto-label-only')
+          }
+          
+          if ('${{ inputs.test_mode }}' -eq 'true')     { $params['TestMode'] = $true }
+          if ('${{ inputs.skip_existing }}' -eq 'true') { $params['SkipExisting'] = $true }
+          $params['Force'] = $true
+          
+          .\Restore-PurviewConfig.ps1 @params
+
+      - name: Disconnect target
+        if: always()
+        shell: pwsh
+        run: Disconnect-ExchangeOnline -Confirm:$false -ErrorAction SilentlyContinue
