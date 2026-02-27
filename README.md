@@ -1,5 +1,12 @@
 # Purview SIT Migration Toolkit
 
+> **⚠️ DISCLAIMER — Scope & Supportability**
+> This toolkit is a **community / field-authored project** and is **not a Microsoft-supported product**.
+> It is designed exclusively for **single-tenant (tenant-local) backup, restore, and migration** of Purview compliance configurations.
+> It does **not** provide Multi-Tenant Organization (MTO) labeling, DLP synchronization, or cross-tenant compliance management capabilities.
+> MTO-aware labeling and DLP are **in-progress product features** owned by the Microsoft Purview engineering team.
+> For MTO-specific requirements, please engage your Microsoft account team or the Purview product group directly — do not rely on this toolkit for MTO scenarios.
+
 This toolkit automates the migration of Custom Sensitive Information Types (SITs) between Microsoft 365 tenants.
 
 > 🔒 **SECURITY**: This repo is secured with comprehensive `.gitignore` rules. All certificates, configs, and export data are protected. **[Security Status →](REPOSITORY-SECURITY.md)** | **[Security Guidelines →](SECURITY.md)**
@@ -260,6 +267,22 @@ This script will:
 
 ### Testing & Development
 *   **`02-Create-Sample-SITs.ps1`**: (Optional) Creates dummy data for testing purposes. Not required for actual migration.
+
+### 🚫 Multi-Tenant Organization (MTO) — Out of Scope
+
+This toolkit operates on a **single tenant at a time**. It does **not** address:
+
+*   **MTO-aware sensitivity labeling** — Consistent label definitions, visual markings, or encryption behaviors across tenants in a Multi-Tenant Organization.
+*   **Cross-tenant DLP policy synchronization** — Automatic mirroring or federation of DLP policies and rules across MTO member tenants.
+*   **Cross-tenant label scoping or priority resolution** — Handling conflicts when labels from different tenants apply to the same content.
+
+**Why?** These capabilities require deep platform-level integration (e.g., cross-tenant trust, unified policy evaluation, shared label metadata) that cannot be replicated through PowerShell scripting or configuration export/import. They are **active areas of investment by the Microsoft Purview product team**.
+
+**What to do if you have MTO requirements:**
+1. Engage your **Microsoft Account Team** or **Customer Success Account Manager (CSAM)** to discuss your MTO compliance needs.
+2. File feature requests through the **[Microsoft Purview feedback portal](https://feedbackportal.microsoft.com/)** or **Microsoft 365 Admin Center > Support**.
+3. Review the **[Microsoft 365 Roadmap](https://www.microsoft.com/en-us/microsoft-365/roadmap)** for upcoming MTO-related Purview capabilities.
+4. Do **not** attempt to use this toolkit as a substitute for native MTO product features — it will not produce consistent cross-tenant behavior.
 
 ---
 
