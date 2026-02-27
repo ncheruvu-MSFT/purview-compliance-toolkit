@@ -121,8 +121,13 @@ foreach ($label in $parentLabels) {
     $displayName = $label.DisplayName
     
     if ($PSCmdlet.ShouldProcess($displayName, "Import sensitivity label")) {
+        # Try by display name first; fall back to exported Name/GUID in case
+        # Get-Label -Identity doesn't match GUID-named labels by display name.
         $existing = Get-Label -Identity $displayName -ErrorAction SilentlyContinue
-        
+        if (-not $existing -and $label.Name) {
+            $existing = Get-Label -Identity $label.Name -ErrorAction SilentlyContinue
+        }
+
         if ($existing) {
             if ($SkipExisting) {
                 Write-Host "   ⏩ $displayName (already exists — skipped)" -ForegroundColor DarkGray
@@ -195,8 +200,29 @@ if ($subLabels.Count -gt 0) {
         }
         
         if ($PSCmdlet.ShouldProcess($displayName, "Import sub-label")) {
-            $existing = Get-Label -Identity $displayName -ErrorAction SilentlyContinue
-            
+            # Look up by name, but verify it is actually nested under the correct parent.
+            # A parent label and a sub-label can share the same DisplayName; Get-Label
+            # returns whichever it finds first, which may be the same-named parent label.
+            # Try by display name first; fall back to exported Name/GUID.
+            $candidateLabel = Get-Label -Identity $displayName -ErrorAction SilentlyContinue
+            if (-not $candidateLabel -and $label.Name) {
+                $candidateLabel = Get-Label -Identity $label.Name -ErrorAction SilentlyContinue
+            }
+            $existing = $null
+            if ($candidateLabel) {
+                $candidateParent = if ($candidateLabel.ParentId) { $candidateLabel.ParentId.ToString() } else { '' }
+                if ($candidateParent -eq $targetParentGuid) {
+                    $existing = $candidateLabel
+                } else {
+                    # Same display name exists at a different hierarchy level.
+                    # Do a full scan to see whether the correct sub-label already exists.
+                    $existing = Get-Label -ErrorAction SilentlyContinue | Where-Object {
+                        $_.DisplayName -eq $displayName -and
+                        $_.ParentId -and $_.ParentId.ToString() -eq $targetParentGuid
+                    } | Select-Object -First 1
+                }
+            }
+
             if ($existing) {
                 if ($SkipExisting) {
                     Write-Host "   ⏩ $displayName (already exists — skipped)" -ForegroundColor DarkGray

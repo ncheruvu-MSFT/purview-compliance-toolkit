@@ -1,0 +1,489 @@
+[
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Non-business data, for personal use only.",
+    "Guid": "defa4170-0d19-0005-0000-bc88714345d2",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Non-business data, for personal use only.]",
+      "[displayname, Personal]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0000-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Personal",
+    "Comment": "",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 0,
+    "Name": "defa4170-0d19-0005-0000-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Personal\"},{\"Key\":\"en-US\",\"Value\":\"Personal\"},{\"Key\":\"de-DE\",\"Value\":\"Persönlich\"},{\"Key\":\"es-ES\",\"Value\":\"Personal\"},{\"Key\":\"fr-FR\",\"Value\":\"Personnel\"},{\"Key\":\"it-IT\",\"Value\":\"Personale\"},{\"Key\":\"ja-JP\",\"Value\":\"個人用\"},{\"Key\":\"ko-KR\",\"Value\":\"개인용\"},{\"Key\":\"pt-BR\",\"Value\":\"Pessoal\"},{\"Key\":\"ru-RU\",\"Value\":\"Личное\"},{\"Key\":\"zh-CN\",\"Value\":\"个人\"},{\"Key\":\"zh-TW\",\"Value\":\"個人\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Non-business data, for personal use only.\"},{\"Key\":\"en-US\",\"Value\":\"Personal\"},{\"Key\":\"de-DE\",\"Value\":\"Persönlich\"},{\"Key\":\"es-ES\",\"Value\":\"Personal\"},{\"Key\":\"fr-FR\",\"Value\":\"Personnel\"},{\"Key\":\"it-IT\",\"Value\":\"Personale\"},{\"Key\":\"ja-JP\",\"Value\":\"個人用\"},{\"Key\":\"ko-KR\",\"Value\":\"개인용\"},{\"Key\":\"pt-BR\",\"Value\":\"Pessoal\"},{\"Key\":\"ru-RU\",\"Value\":\"Личное\"},{\"Key\":\"zh-CN\",\"Value\":\"个人\"},{\"Key\":\"zh-TW\",\"Value\":\"個人\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Business data that is specifically prepared and approved for public consumption.",
+    "Guid": "defa4170-0d19-0005-0001-bc88714345d2",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email, Site, UnifiedGroup, Teamwork]",
+      "[tooltip, Business data that is specifically prepared and approved for public consumption.]",
+      "[defaultcontentlabel, defa4170-0d19-0005-0001-bc88714345d2]",
+      "[displayname, Public]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0001-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Public",
+    "Comment": "",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 1,
+    "Name": "defa4170-0d19-0005-0001-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Public\"},{\"Key\":\"en-US\",\"Value\":\"Public\"},{\"Key\":\"de-DE\",\"Value\":\"Öffentlich\"},{\"Key\":\"es-ES\",\"Value\":\"Público\"},{\"Key\":\"fr-FR\",\"Value\":\"Public\"},{\"Key\":\"it-IT\",\"Value\":\"Pubblico\"},{\"Key\":\"ja-JP\",\"Value\":\"公共\"},{\"Key\":\"ko-KR\",\"Value\":\"공개\"},{\"Key\":\"pt-BR\",\"Value\":\"Público\"},{\"Key\":\"ru-RU\",\"Value\":\"Открытый доступ\"},{\"Key\":\"zh-CN\",\"Value\":\"公用\"},{\"Key\":\"zh-TW\",\"Value\":\"公用\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Business data that is specifically prepared and approved for public consumption.\"},{\"Key\":\"en-US\",\"Value\":\"Public\"},{\"Key\":\"de-DE\",\"Value\":\"Öffentlich\"},{\"Key\":\"es-ES\",\"Value\":\"Público\"},{\"Key\":\"fr-FR\",\"Value\":\"Public\"},{\"Key\":\"it-IT\",\"Value\":\"Pubblico\"},{\"Key\":\"ja-JP\",\"Value\":\"公共\"},{\"Key\":\"ko-KR\",\"Value\":\"공개\"},{\"Key\":\"pt-BR\",\"Value\":\"Público\"},{\"Key\":\"ru-RU\",\"Value\":\"Открытый доступ\"},{\"Key\":\"zh-CN\",\"Value\":\"公用\"},{\"Key\":\"zh-TW\",\"Value\":\"公用\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Site, UnifiedGroup, Teamwork"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Business data that is not intended for public consumption. However, this can be shared with external partners, as required. Examples include a company internal telephone directory, organizational charts, internal standards, and most internal communication.",
+    "Guid": "defa4170-0d19-0005-0002-bc88714345d2",
+    "Settings": [
+      "[isparent, True]",
+      "[islabelgroup, True]",
+      "[contenttype, None]",
+      "[tooltip, Business data that is not intended for public consumption. However, this can be shared with external partners, as required. Examples include a company internal telephone directory, organizational charts, internal standards, and most internal communication.]",
+      "[displayname, General]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0002-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "General",
+    "Comment": "",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 2,
+    "Name": "defa4170-0d19-0005-0002-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"General\"},{\"Key\":\"en-US\",\"Value\":\"General\"},{\"Key\":\"de-DE\",\"Value\":\"Allgemein\"},{\"Key\":\"es-ES\",\"Value\":\"General\"},{\"Key\":\"fr-FR\",\"Value\":\"Général\"},{\"Key\":\"it-IT\",\"Value\":\"Generale\"},{\"Key\":\"ja-JP\",\"Value\":\"一般\"},{\"Key\":\"ko-KR\",\"Value\":\"일반\"},{\"Key\":\"pt-BR\",\"Value\":\"Geral\"},{\"Key\":\"ru-RU\",\"Value\":\"Общее\"},{\"Key\":\"zh-CN\",\"Value\":\"常规\"},{\"Key\":\"zh-TW\",\"Value\":\"一般\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Business data that is not intended for public consumption. However, this can be shared with external partners, as required. Examples include a company internal telephone directory, organizational charts, internal standards, and most internal communication.\"},{\"Key\":\"en-US\",\"Value\":\"General\"},{\"Key\":\"de-DE\",\"Value\":\"Allgemein\"},{\"Key\":\"es-ES\",\"Value\":\"General\"},{\"Key\":\"fr-FR\",\"Value\":\"Général\"},{\"Key\":\"it-IT\",\"Value\":\"Generale\"},{\"Key\":\"ja-JP\",\"Value\":\"一般\"},{\"Key\":\"ko-KR\",\"Value\":\"일반\"},{\"Key\":\"pt-BR\",\"Value\":\"Geral\"},{\"Key\":\"ru-RU\",\"Value\":\"Общее\"},{\"Key\":\"zh-CN\",\"Value\":\"常规\"},{\"Key\":\"zh-TW\",\"Value\":\"一般\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "None"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Organization data that isn''t intended for public consumption but can be shared with external partners if appropriate. Examples include customer conversations that don''t include sensitive info or released marketing materials.",
+    "Guid": "defa4170-0d19-0005-0003-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0002-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Organization data that isn''t intended for public consumption but can be shared with external partners if appropriate. Examples include customer conversations that don''t include sensitive info or released marketing materials.]",
+      "[isparent, False]",
+      "[displayname, Anyone (unrestricted)]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0003-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Anyone (unrestricted)",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0002-bc88714345d2",
+    "Conditions": [],
+    "Priority": 3,
+    "Name": "defa4170-0d19-0005-0003-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"en-US\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"de-DE\",\"Value\":\"Jeder (uneingeschränkt)\"},{\"Key\":\"es-ES\",\"Value\":\"Cualquiera (sin restricciones)\"},{\"Key\":\"fr-FR\",\"Value\":\"Tout le monde (sans restriction)\"},{\"Key\":\"it-IT\",\"Value\":\"Chiunque (senza restrizioni)\"},{\"Key\":\"ja-JP\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 사용자(제한 없음)\"},{\"Key\":\"pt-BR\",\"Value\":\"Qualquer Pessoa (irrestrito)\"},{\"Key\":\"ru-RU\",\"Value\":\"Все (без ограничений)\"},{\"Key\":\"zh-CN\",\"Value\":\"任何人(不受限制)\"},{\"Key\":\"zh-TW\",\"Value\":\"任何人 (無限制)\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Organization data that isn''t intended for public consumption but can be shared with external partners if appropriate. Examples include customer conversations that don''t include sensitive info or released marketing materials.\"},{\"Key\":\"en-US\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"de-DE\",\"Value\":\"Jeder (uneingeschränkt)\"},{\"Key\":\"es-ES\",\"Value\":\"Cualquiera (sin restricciones)\"},{\"Key\":\"fr-FR\",\"Value\":\"Tout le monde (sans restriction)\"},{\"Key\":\"it-IT\",\"Value\":\"Chiunque (senza restrizioni)\"},{\"Key\":\"ja-JP\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 사용자(제한 없음)\"},{\"Key\":\"pt-BR\",\"Value\":\"Qualquer Pessoa (irrestrito)\"},{\"Key\":\"ru-RU\",\"Value\":\"Все (без ограничений)\"},{\"Key\":\"zh-CN\",\"Value\":\"任何人(不受限制)\"},{\"Key\":\"zh-TW\",\"Value\":\"任何人 (無限制)\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Organization data that isn''t intended for public consumption. If you need to share this content with external partners, make sure it''s appropriate with data owners and relabel content as General/Anyone (unrestricted). Examples include a company internal telephone directory, organizational charts, internal standards, and most internal communication.",
+    "Guid": "defa4170-0d19-0005-0004-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0002-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Organization data that isn''t intended for public consumption. If you need to share this content with external partners, make sure it''s appropriate with data owners and relabel content as General/Anyone (unrestricted). Examples include a company internal telephone directory, organizational charts, internal standards, and most internal communication.]",
+      "[isparent, False]",
+      "[displayname, All Employees (unrestricted)]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0004-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "All Employees (unrestricted)",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0002-bc88714345d2",
+    "Conditions": [],
+    "Priority": 4,
+    "Name": "defa4170-0d19-0005-0004-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"All Employees (unrestricted)\"},{\"Key\":\"en-US\",\"Value\":\"All Employees (unrestricted)\"},{\"Key\":\"de-DE\",\"Value\":\"Alle Mitarbeiter (uneingeschränkt)\"},{\"Key\":\"es-ES\",\"Value\":\"Todos los empleados (sin restricciones)\"},{\"Key\":\"fr-FR\",\"Value\":\"Tous les Employés (non restreint)\"},{\"Key\":\"it-IT\",\"Value\":\"Tutti i dipendenti (senza restrizioni)\"},{\"Key\":\"ja-JP\",\"Value\":\"All Employees (unrestricted)\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 직원(제한 없음)\"},{\"Key\":\"pt-BR\",\"Value\":\"Todos os Funcionários (irrestrito)\"},{\"Key\":\"ru-RU\",\"Value\":\"Все сотрудники (без ограничений)\"},{\"Key\":\"zh-CN\",\"Value\":\"所有员工(不受限制)\"},{\"Key\":\"zh-TW\",\"Value\":\"所有員工 (無限制)\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Organization data that isn''t intended for public consumption. If you need to share this content with external partners, make sure it''s appropriate with data owners and relabel content as General/Anyone (unrestricted). Examples include a company internal telephone directory, organizational charts, internal standards, and most internal communication.\"},{\"Key\":\"en-US\",\"Value\":\"All Employees (unrestricted)\"},{\"Key\":\"de-DE\",\"Value\":\"Alle Mitarbeiter (uneingeschränkt)\"},{\"Key\":\"es-ES\",\"Value\":\"Todos los empleados (sin restricciones)\"},{\"Key\":\"fr-FR\",\"Value\":\"Tous les Employés (non restreint)\"},{\"Key\":\"it-IT\",\"Value\":\"Tutti i dipendenti (senza restrizioni)\"},{\"Key\":\"ja-JP\",\"Value\":\"All Employees (unrestricted)\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 직원(제한 없음)\"},{\"Key\":\"pt-BR\",\"Value\":\"Todos os Funcionários (irrestrito)\"},{\"Key\":\"ru-RU\",\"Value\":\"Все сотрудники (без ограничений)\"},{\"Key\":\"zh-CN\",\"Value\":\"所有员工(不受限制)\"},{\"Key\":\"zh-TW\",\"Value\":\"所有員工 (無限制)\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Sensitive business data that could cause damage to the business if shared with unauthorized people. Examples include contracts, security reports, forecast summaries, and sales account data.",
+    "Guid": "defa4170-0d19-0005-0005-bc88714345d2",
+    "Settings": [
+      "[isparent, True]",
+      "[islabelgroup, True]",
+      "[contenttype, None]",
+      "[tooltip, Sensitive business data that could cause damage to the business if shared with unauthorized people. Examples include contracts, security reports, forecast summaries, and sales account data.]",
+      "[displayname, Confidential]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0005-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Confidential",
+    "Comment": "",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 5,
+    "Name": "defa4170-0d19-0005-0005-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Confidential\"},{\"Key\":\"en-US\",\"Value\":\"Confidential\"},{\"Key\":\"de-DE\",\"Value\":\"Vertraulich\"},{\"Key\":\"es-ES\",\"Value\":\"Confidencial\"},{\"Key\":\"fr-FR\",\"Value\":\"Confidentiel\"},{\"Key\":\"it-IT\",\"Value\":\"Riservato\"},{\"Key\":\"ja-JP\",\"Value\":\"機密\"},{\"Key\":\"ko-KR\",\"Value\":\"기밀\"},{\"Key\":\"pt-BR\",\"Value\":\"Confidencial\"},{\"Key\":\"ru-RU\",\"Value\":\"Конфиденциально\"},{\"Key\":\"zh-CN\",\"Value\":\"机密\"},{\"Key\":\"zh-TW\",\"Value\":\"保密\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Sensitive business data that could cause damage to the business if shared with unauthorized people. Examples include contracts, security reports, forecast summaries, and sales account data.\"},{\"Key\":\"en-US\",\"Value\":\"Confidential\"},{\"Key\":\"de-DE\",\"Value\":\"Vertraulich\"},{\"Key\":\"es-ES\",\"Value\":\"Confidencial\"},{\"Key\":\"fr-FR\",\"Value\":\"Confidentiel\"},{\"Key\":\"it-IT\",\"Value\":\"Riservato\"},{\"Key\":\"ja-JP\",\"Value\":\"機密\"},{\"Key\":\"ko-KR\",\"Value\":\"기밀\"},{\"Key\":\"pt-BR\",\"Value\":\"Confidencial\"},{\"Key\":\"ru-RU\",\"Value\":\"Конфиденциально\"},{\"Key\":\"zh-CN\",\"Value\":\"机密\"},{\"Key\":\"zh-TW\",\"Value\":\"保密\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "None"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Left\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#000000\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"Classified as Confidential\"}]}"
+    ],
+    "EncryptionEnabled": null,
+    "Tooltip": "Data that does not require protection. Use this option with care and with appropriate business justification.",
+    "Guid": "defa4170-0d19-0005-0006-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0005-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Data that does not require protection. Use this option with care and with appropriate business justification.]",
+      "[isparent, False]",
+      "[displayname, Anyone (unrestricted)]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0006-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Anyone (unrestricted)",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0005-bc88714345d2",
+    "Conditions": [
+      "{\"And\":[{\"And\":[{\"Key\":\"CCSI\",\"Value\":\"50842eb7-edc8-4019-85dd-5a5c1f2bb085\",\"Properties\":null,\"Settings\":[{\"Key\":\"mincount\",\"Value\":\"1\"},{\"Key\":\"maxconfidence\",\"Value\":\"100\"},{\"Key\":\"rulepackage\",\"Value\":\"00000000-0000-0000-0000-000000000000\"},{\"Key\":\"name\",\"Value\":\"Credit Card Number\"},{\"Key\":\"minconfidence\",\"Value\":\"85\"},{\"Key\":\"maxcount\",\"Value\":\"9\"},{\"Key\":\"groupname\",\"Value\":\"Default\"},{\"Key\":\"confidencelevel\",\"Value\":\"High\"},{\"Key\":\"autoapplytype\",\"Value\":\"Recommend\"}]}]}]}"
+    ],
+    "Priority": 6,
+    "Name": "defa4170-0d19-0005-0006-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"en-US\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"de-DE\",\"Value\":\"Jeder (uneingeschränkt)\"},{\"Key\":\"es-ES\",\"Value\":\"Cualquiera (sin restricciones)\"},{\"Key\":\"fr-FR\",\"Value\":\"Tout le monde (sans restriction)\"},{\"Key\":\"it-IT\",\"Value\":\"Chiunque (senza restrizioni)\"},{\"Key\":\"ja-JP\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 사용자(제한 없음)\"},{\"Key\":\"pt-BR\",\"Value\":\"Qualquer Pessoa (irrestrito)\"},{\"Key\":\"ru-RU\",\"Value\":\"Все (без ограничений)\"},{\"Key\":\"zh-CN\",\"Value\":\"任何人(不受限制)\"},{\"Key\":\"zh-TW\",\"Value\":\"任何人 (無限制)\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Data that does not require protection. Use this option with care and with appropriate business justification.\"},{\"Key\":\"en-US\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"de-DE\",\"Value\":\"Jeder (uneingeschränkt)\"},{\"Key\":\"es-ES\",\"Value\":\"Cualquiera (sin restricciones)\"},{\"Key\":\"fr-FR\",\"Value\":\"Tout le monde (sans restriction)\"},{\"Key\":\"it-IT\",\"Value\":\"Chiunque (senza restrizioni)\"},{\"Key\":\"ja-JP\",\"Value\":\"Anyone (unrestricted)\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 사용자(제한 없음)\"},{\"Key\":\"pt-BR\",\"Value\":\"Qualquer Pessoa (irrestrito)\"},{\"Key\":\"ru-RU\",\"Value\":\"Все (без ограничений)\"},{\"Key\":\"zh-CN\",\"Value\":\"任何人(不受限制)\"},{\"Key\":\"zh-TW\",\"Value\":\"任何人 (無限制)\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Left\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#000000\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"Classified as Confidential\"}]}",
+      "{\"Type\":\"encrypt\",\"SubType\":null,\"Settings\":[{\"Key\":\"protectiontype\",\"Value\":\"template\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"templateid\",\"Value\":\"de6dbe70-c280-4747-9329-2b589b5529a9\"},{\"Key\":\"templatearchived\",\"Value\":\"False\"},{\"Key\":\"linkedtemplateid\",\"Value\":\"de6dbe70-c280-4747-9329-2b589b5529a9\"},{\"Key\":\"contentexpiredondateindaysornever\",\"Value\":\"Never\"},{\"Key\":\"offlineaccessdays\",\"Value\":\"-1\"},{\"Key\":\"rightsdefinitions\",\"Value\":\"[{\\\"Identity\\\":\\\"MngEnvMCAP219373.onmicrosoft.com\\\",\\\"Rights\\\":\\\"VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL\\\"}]\"}]}"
+    ],
+    "EncryptionEnabled": true,
+    "Tooltip": "Confidential data that requires protection, which allows all employees full permissions. Data owners can track and revoke content.",
+    "Guid": "defa4170-0d19-0005-0007-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0005-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Confidential data that requires protection, which allows all employees full permissions. Data owners can track and revoke content.]",
+      "[isparent, False]",
+      "[displayname, All Employees]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0007-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "All Employees",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0005-bc88714345d2",
+    "Conditions": [
+      "{\"And\":[{\"And\":[{\"Key\":\"CCSI\",\"Value\":\"50842eb7-edc8-4019-85dd-5a5c1f2bb085\",\"Properties\":null,\"Settings\":[{\"Key\":\"mincount\",\"Value\":\"10\"},{\"Key\":\"maxconfidence\",\"Value\":\"100\"},{\"Key\":\"rulepackage\",\"Value\":\"00000000-0000-0000-0000-000000000000\"},{\"Key\":\"name\",\"Value\":\"Credit Card Number\"},{\"Key\":\"minconfidence\",\"Value\":\"85\"},{\"Key\":\"groupname\",\"Value\":\"Default\"},{\"Key\":\"confidencelevel\",\"Value\":\"High\"},{\"Key\":\"autoapplytype\",\"Value\":\"Recommend\"}]}]}]}"
+    ],
+    "Priority": 7,
+    "Name": "defa4170-0d19-0005-0007-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"All Employees\"},{\"Key\":\"en-US\",\"Value\":\"All Employees\"},{\"Key\":\"de-DE\",\"Value\":\"Alle Mitarbeiter\"},{\"Key\":\"es-ES\",\"Value\":\"Todos los empleados\"},{\"Key\":\"fr-FR\",\"Value\":\"Tous les Employés\"},{\"Key\":\"it-IT\",\"Value\":\"Tutti i dipendenti\"},{\"Key\":\"ja-JP\",\"Value\":\"All Employees\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 직원\"},{\"Key\":\"pt-BR\",\"Value\":\"Todos os Funcionários\"},{\"Key\":\"ru-RU\",\"Value\":\"Все сотрудники\"},{\"Key\":\"zh-CN\",\"Value\":\"所有员工\"},{\"Key\":\"zh-TW\",\"Value\":\"所有員工\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Confidential data that requires protection, which allows all employees full permissions. Data owners can track and revoke content.\"},{\"Key\":\"en-US\",\"Value\":\"All Employees\"},{\"Key\":\"de-DE\",\"Value\":\"Alle Mitarbeiter\"},{\"Key\":\"es-ES\",\"Value\":\"Todos los empleados\"},{\"Key\":\"fr-FR\",\"Value\":\"Tous les Employés\"},{\"Key\":\"it-IT\",\"Value\":\"Tutti i dipendenti\"},{\"Key\":\"ja-JP\",\"Value\":\"All Employees\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 직원\"},{\"Key\":\"pt-BR\",\"Value\":\"Todos os Funcionários\"},{\"Key\":\"ru-RU\",\"Value\":\"Все сотрудники\"},{\"Key\":\"zh-CN\",\"Value\":\"所有员工\"},{\"Key\":\"zh-TW\",\"Value\":\"所有員工\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Left\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#000000\"},{\"Key\":\"fontsize\",\"Value\":\"10\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"Classified as Confidential\"}]}",
+      "{\"Type\":\"encrypt\",\"SubType\":null,\"Settings\":[{\"Key\":\"protectiontype\",\"Value\":\"userdefined\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"donotforward\",\"Value\":\"false\"},{\"Key\":\"promptuser\",\"Value\":\"true\"},{\"Key\":\"encryptonly\",\"Value\":\"true\"}]}"
+    ],
+    "EncryptionEnabled": true,
+    "Tooltip": "Confidential data for internal/external sharing that can be reshared by trusted recipients.",
+    "Guid": "defa4170-0d19-0005-0008-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0005-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Confidential data for internal/external sharing that can be reshared by trusted recipients.]",
+      "[isparent, False]",
+      "[displayname, Trusted People]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0008-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Trusted People",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0005-bc88714345d2",
+    "Conditions": [],
+    "Priority": 8,
+    "Name": "defa4170-0d19-0005-0008-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Trusted People\"},{\"Key\":\"en-US\",\"Value\":\"Trusted People\"},{\"Key\":\"de-DE\",\"Value\":\"Vertrauenswürdige Personen\"},{\"Key\":\"es-ES\",\"Value\":\"Personas de confianza\"},{\"Key\":\"fr-FR\",\"Value\":\"Personnes Autorisées\"},{\"Key\":\"it-IT\",\"Value\":\"Persone attendibili\"},{\"Key\":\"ja-JP\",\"Value\":\"Trusted People\"},{\"Key\":\"ko-KR\",\"Value\":\"신뢰하는 사용자\"},{\"Key\":\"pt-BR\",\"Value\":\"Pessoas Confiáveis\"},{\"Key\":\"ru-RU\",\"Value\":\"Доверенные лица\"},{\"Key\":\"zh-CN\",\"Value\":\"受信任的人员\"},{\"Key\":\"zh-TW\",\"Value\":\"受信任人員\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Confidential data for internal/external sharing that can be reshared by trusted recipients.\"},{\"Key\":\"en-US\",\"Value\":\"Trusted People\"},{\"Key\":\"de-DE\",\"Value\":\"Vertrauenswürdige Personen\"},{\"Key\":\"es-ES\",\"Value\":\"Personas de confianza\"},{\"Key\":\"fr-FR\",\"Value\":\"Personnes Autorisées\"},{\"Key\":\"it-IT\",\"Value\":\"Persone attendibili\"},{\"Key\":\"ja-JP\",\"Value\":\"Trusted People\"},{\"Key\":\"ko-KR\",\"Value\":\"신뢰하는 사용자\"},{\"Key\":\"pt-BR\",\"Value\":\"Pessoas Confiáveis\"},{\"Key\":\"ru-RU\",\"Value\":\"Доверенные лица\"},{\"Key\":\"zh-CN\",\"Value\":\"受信任的人员\"},{\"Key\":\"zh-TW\",\"Value\":\"受信任人員\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Very sensitive business data that would cause damage to the business if it was shared with unauthorized people. Examples include employee and customer information, passwords, source code, and pre-announced financial reports.",
+    "Guid": "defa4170-0d19-0005-0009-bc88714345d2",
+    "Settings": [
+      "[isparent, True]",
+      "[islabelgroup, True]",
+      "[contenttype, None]",
+      "[tooltip, Very sensitive business data that would cause damage to the business if it was shared with unauthorized people. Examples include employee and customer information, passwords, source code, and pre-announced financial reports.]",
+      "[displayname, Highly Confidential]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-0009-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Highly Confidential",
+    "Comment": "",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 9,
+    "Name": "defa4170-0d19-0005-0009-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Highly Confidential\"},{\"Key\":\"en-US\",\"Value\":\"Highly Confidential \"},{\"Key\":\"de-DE\",\"Value\":\"Streng vertraulich \"},{\"Key\":\"es-ES\",\"Value\":\"Extremadamente confidencial \"},{\"Key\":\"fr-FR\",\"Value\":\"Hautement Confidentiel \"},{\"Key\":\"it-IT\",\"Value\":\"Strettamente riservato \"},{\"Key\":\"ja-JP\",\"Value\":\"Highly Confidential \"},{\"Key\":\"ko-KR\",\"Value\":\"높은 기밀 \"},{\"Key\":\"pt-BR\",\"Value\":\"Altamente Confidencial \"},{\"Key\":\"ru-RU\",\"Value\":\"Строго конфиденциально \"},{\"Key\":\"zh-CN\",\"Value\":\"高度机密 \"},{\"Key\":\"zh-TW\",\"Value\":\"高度機密 \"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Very sensitive business data that would cause damage to the business if it was shared with unauthorized people. Examples include employee and customer information, passwords, source code, and pre-announced financial reports.\"},{\"Key\":\"en-US\",\"Value\":\"Highly Confidential \"},{\"Key\":\"de-DE\",\"Value\":\"Streng vertraulich \"},{\"Key\":\"es-ES\",\"Value\":\"Extremadamente confidencial \"},{\"Key\":\"fr-FR\",\"Value\":\"Hautement Confidentiel \"},{\"Key\":\"it-IT\",\"Value\":\"Strettamente riservato \"},{\"Key\":\"ja-JP\",\"Value\":\"Highly Confidential \"},{\"Key\":\"ko-KR\",\"Value\":\"높은 기밀 \"},{\"Key\":\"pt-BR\",\"Value\":\"Altamente Confidencial \"},{\"Key\":\"ru-RU\",\"Value\":\"Строго конфиденциально \"},{\"Key\":\"zh-CN\",\"Value\":\"高度机密 \"},{\"Key\":\"zh-TW\",\"Value\":\"高度機密 \"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "None"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Left\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#000000\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"Classified as Highly Confidential\"}]}",
+      "{\"Type\":\"encrypt\",\"SubType\":null,\"Settings\":[{\"Key\":\"protectiontype\",\"Value\":\"template\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"templateid\",\"Value\":\"5b7038a4-18f9-4317-8362-7d519f6577a9\"},{\"Key\":\"templatearchived\",\"Value\":\"False\"},{\"Key\":\"linkedtemplateid\",\"Value\":\"5b7038a4-18f9-4317-8362-7d519f6577a9\"},{\"Key\":\"contentexpiredondateindaysornever\",\"Value\":\"Never\"},{\"Key\":\"offlineaccessdays\",\"Value\":\"-1\"},{\"Key\":\"rightsdefinitions\",\"Value\":\"[{\\\"Identity\\\":\\\"MngEnvMCAP219373.onmicrosoft.com\\\",\\\"Rights\\\":\\\"VIEW,VIEWRIGHTSDATA,DOCEDIT,EDIT,PRINT,EXTRACT,REPLY,REPLYALL,FORWARD,OBJMODEL\\\"}]\"}]}"
+    ],
+    "EncryptionEnabled": true,
+    "Tooltip": "Highly confidential data that allows all employees view, edit, and reply permissions to this content. Data owners can track and revoke content.",
+    "Guid": "defa4170-0d19-0005-000a-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0009-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Highly confidential data that allows all employees view, edit, and reply permissions to this content. Data owners can track and revoke content.]",
+      "[isparent, False]",
+      "[displayname, All Employees]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-000a-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "All Employees",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0009-bc88714345d2",
+    "Conditions": [
+      "{\"And\":[{\"And\":[{\"Key\":\"CCSI\",\"Value\":\"50842eb7-edc8-4019-85dd-5a5c1f2bb085\",\"Properties\":null,\"Settings\":[{\"Key\":\"mincount\",\"Value\":\"10\"},{\"Key\":\"maxconfidence\",\"Value\":\"100\"},{\"Key\":\"rulepackage\",\"Value\":\"00000000-0000-0000-0000-000000000000\"},{\"Key\":\"name\",\"Value\":\"Credit Card Number\"},{\"Key\":\"minconfidence\",\"Value\":\"85\"},{\"Key\":\"groupname\",\"Value\":\"Default\"},{\"Key\":\"confidencelevel\",\"Value\":\"High\"},{\"Key\":\"autoapplytype\",\"Value\":\"Recommend\"}]}]}]}"
+    ],
+    "Priority": 10,
+    "Name": "defa4170-0d19-0005-000a-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"All Employees\"},{\"Key\":\"en-US\",\"Value\":\"All Employees\"},{\"Key\":\"de-DE\",\"Value\":\"Alle Mitarbeiter\"},{\"Key\":\"es-ES\",\"Value\":\"Todos los empleados\"},{\"Key\":\"fr-FR\",\"Value\":\"Tous les Employés\"},{\"Key\":\"it-IT\",\"Value\":\"Tutti i dipendenti\"},{\"Key\":\"ja-JP\",\"Value\":\"All Employees\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 직원\"},{\"Key\":\"pt-BR\",\"Value\":\"Todos os Funcionários\"},{\"Key\":\"ru-RU\",\"Value\":\"Все сотрудники\"},{\"Key\":\"zh-CN\",\"Value\":\"所有员工\"},{\"Key\":\"zh-TW\",\"Value\":\"所有員工\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Highly confidential data that allows all employees view, edit, and reply permissions to this content. Data owners can track and revoke content.\"},{\"Key\":\"en-US\",\"Value\":\"All Employees\"},{\"Key\":\"de-DE\",\"Value\":\"Alle Mitarbeiter\"},{\"Key\":\"es-ES\",\"Value\":\"Todos los empleados\"},{\"Key\":\"fr-FR\",\"Value\":\"Tous les Employés\"},{\"Key\":\"it-IT\",\"Value\":\"Tutti i dipendenti\"},{\"Key\":\"ja-JP\",\"Value\":\"All Employees\"},{\"Key\":\"ko-KR\",\"Value\":\"모든 직원\"},{\"Key\":\"pt-BR\",\"Value\":\"Todos os Funcionários\"},{\"Key\":\"ru-RU\",\"Value\":\"Все сотрудники\"},{\"Key\":\"zh-CN\",\"Value\":\"所有员工\"},{\"Key\":\"zh-TW\",\"Value\":\"所有員工\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Left\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#000000\"},{\"Key\":\"fontsize\",\"Value\":\"10\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"Classified as Highly Confidential\"}]}",
+      "{\"Type\":\"encrypt\",\"SubType\":null,\"Settings\":[{\"Key\":\"protectiontype\",\"Value\":\"userdefined\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"donotforward\",\"Value\":\"true\"},{\"Key\":\"promptuser\",\"Value\":\"true\"},{\"Key\":\"encryptonly\",\"Value\":\"false\"}]}"
+    ],
+    "EncryptionEnabled": true,
+    "Tooltip": "Highly Confidential data that requires protection and that can only be viewed by specified people, with limited rights.",
+    "Guid": "defa4170-0d19-0005-000b-bc88714345d2",
+    "Settings": [
+      "[parentid, defa4170-0d19-0005-0009-bc88714345d2]",
+      "[contenttype, File, Email, Teamwork]",
+      "[tooltip, Highly Confidential data that requires protection and that can only be viewed by specified people, with limited rights.]",
+      "[isparent, False]",
+      "[displayname, Specified People]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/defa4170-0d19-0005-000b-bc88714345d2",
+    "AdvancedSettings": null,
+    "DisplayName": "Specified People",
+    "Comment": "",
+    "ParentId": "defa4170-0d19-0005-0009-bc88714345d2",
+    "Conditions": [],
+    "Priority": 11,
+    "Name": "defa4170-0d19-0005-000b-bc88714345d2",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Specified People\"},{\"Key\":\"en-US\",\"Value\":\"Specific People\"},{\"Key\":\"de-DE\",\"Value\":\"Bestimmte Personen\"},{\"Key\":\"es-ES\",\"Value\":\"Personas específicas\"},{\"Key\":\"fr-FR\",\"Value\":\"Personnes Spécifiques\"},{\"Key\":\"it-IT\",\"Value\":\"Persone specifiche\"},{\"Key\":\"ja-JP\",\"Value\":\"特定の People\"},{\"Key\":\"ko-KR\",\"Value\":\"특정 사용자\"},{\"Key\":\"pt-BR\",\"Value\":\"Pessoas Específicas\"},{\"Key\":\"ru-RU\",\"Value\":\"Определенные пользователи\"},{\"Key\":\"zh-CN\",\"Value\":\"特定人员\"},{\"Key\":\"zh-TW\",\"Value\":\"特定人員\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Highly Confidential data that requires protection and that can only be viewed by specified people, with limited rights.\"},{\"Key\":\"en-US\",\"Value\":\"Specific People\"},{\"Key\":\"de-DE\",\"Value\":\"Bestimmte Personen\"},{\"Key\":\"es-ES\",\"Value\":\"Personas específicas\"},{\"Key\":\"fr-FR\",\"Value\":\"Personnes Spécifiques\"},{\"Key\":\"it-IT\",\"Value\":\"Persone specifiche\"},{\"Key\":\"ja-JP\",\"Value\":\"特定の People\"},{\"Key\":\"ko-KR\",\"Value\":\"특정 사용자\"},{\"Key\":\"pt-BR\",\"Value\":\"Pessoas Específicas\"},{\"Key\":\"ru-RU\",\"Value\":\"Определенные пользователи\"},{\"Key\":\"zh-CN\",\"Value\":\"特定人员\"},{\"Key\":\"zh-TW\",\"Value\":\"特定人員\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email, Teamwork"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#666666\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"This document contains PII. Handle in accordance with data privacy policies.\"}]}",
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"header\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#FF0000\"},{\"Key\":\"fontsize\",\"Value\":\"10\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Header\"},{\"Key\":\"text\",\"Value\":\"CONFIDENTIAL - PII DATA\"}]}"
+    ],
+    "EncryptionEnabled": null,
+    "Tooltip": "Contains Personally Identifiable Information. Handle according to data privacy policies.",
+    "Guid": "16fec438-d53c-4c15-9e00-8df55868ceea",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email]",
+      "[tooltip, Contains Personally Identifiable Information. Handle according to data privacy policies.]",
+      "[displayname, Demo - Confidential - PII Data]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-Confidential-PII",
+    "AdvancedSettings": null,
+    "DisplayName": "Demo - Confidential - PII Data",
+    "Comment": "Sensitivity label for PII data (Confidential tier)",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 12,
+    "Name": "Demo-Confidential-PII",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Demo - Confidential - PII Data\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Contains Personally Identifiable Information. Handle according to data privacy policies.\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#666666\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"This document contains sensitive financial information. Unauthorized disclosure is prohibited.\"}]}",
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"header\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#FF0000\"},{\"Key\":\"fontsize\",\"Value\":\"10\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Header\"},{\"Key\":\"text\",\"Value\":\"HIGHLY CONFIDENTIAL - FINANCIAL DATA\"}]}",
+      "{\"Type\":\"applywatermarking\",\"SubType\":null,\"Settings\":[{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#FF0000\"},{\"Key\":\"fontsize\",\"Value\":\"48\"},{\"Key\":\"layout\",\"Value\":\"Diagonal\"},{\"Key\":\"text\",\"Value\":\"HIGHLY CONFIDENTIAL\"}]}"
+    ],
+    "EncryptionEnabled": null,
+    "Tooltip": "Contains sensitive financial data. Restricted to authorized finance personnel only.",
+    "Guid": "40ddaede-4129-4dbf-90c6-501a495ccd4a",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email]",
+      "[tooltip, Contains sensitive financial data. Restricted to authorized finance personnel only.]",
+      "[displayname, Demo - Highly Confidential - Finance]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-HighlyConfidential-Finance",
+    "AdvancedSettings": null,
+    "DisplayName": "Demo - Highly Confidential - Finance",
+    "Comment": "Sensitivity label for financial data (Highly Confidential tier)",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 13,
+    "Name": "Demo-HighlyConfidential-Finance",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Demo - Highly Confidential - Finance\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Contains sensitive financial data. Restricted to authorized finance personnel only.\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#666666\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"This document contains PII. Handle in accordance with data privacy policies.\"}]}",
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"header\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#FF0000\"},{\"Key\":\"fontsize\",\"Value\":\"10\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Header\"},{\"Key\":\"text\",\"Value\":\"CONFIDENTIAL - PII DATA\"}]}"
+    ],
+    "EncryptionEnabled": null,
+    "Tooltip": "Contains Personally Identifiable Information. Handle according to data privacy policies.",
+    "Guid": "a2718cf9-bac1-4715-9f45-2a7d434424d9",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email]",
+      "[tooltip, Contains Personally Identifiable Information. Handle according to data privacy policies.]",
+      "[displayname, Test - Confidential - PII Data]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Test-Confidential-PII",
+    "AdvancedSettings": null,
+    "DisplayName": "Test - Confidential - PII Data",
+    "Comment": "Sensitivity label for PII data (Confidential tier)",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 14,
+    "Name": "Test-Confidential-PII",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Test - Confidential - PII Data\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Contains Personally Identifiable Information. Handle according to data privacy policies.\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email"
+  },
+  {
+    "LabelActions": [
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"footer\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#666666\"},{\"Key\":\"fontsize\",\"Value\":\"8\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Footer\"},{\"Key\":\"text\",\"Value\":\"This document contains sensitive financial information. Unauthorized disclosure is prohibited.\"}]}",
+      "{\"Type\":\"applycontentmarking\",\"SubType\":\"header\",\"Settings\":[{\"Key\":\"alignment\",\"Value\":\"Center\"},{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#FF0000\"},{\"Key\":\"fontsize\",\"Value\":\"10\"},{\"Key\":\"margin\",\"Value\":\"5\"},{\"Key\":\"placement\",\"Value\":\"Header\"},{\"Key\":\"text\",\"Value\":\"HIGHLY CONFIDENTIAL - FINANCIAL DATA\"}]}",
+      "{\"Type\":\"applywatermarking\",\"SubType\":null,\"Settings\":[{\"Key\":\"disabled\",\"Value\":\"false\"},{\"Key\":\"fontcolor\",\"Value\":\"#FF0000\"},{\"Key\":\"fontsize\",\"Value\":\"48\"},{\"Key\":\"layout\",\"Value\":\"Diagonal\"},{\"Key\":\"text\",\"Value\":\"HIGHLY CONFIDENTIAL\"}]}"
+    ],
+    "EncryptionEnabled": null,
+    "Tooltip": "Contains sensitive financial data. Restricted to authorized finance personnel only.",
+    "Guid": "1251552d-82c3-476b-8881-ef1c3e44226e",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email]",
+      "[tooltip, Contains sensitive financial data. Restricted to authorized finance personnel only.]",
+      "[displayname, Test - Highly Confidential - Finance]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Test-HighlyConfidential-Finance",
+    "AdvancedSettings": null,
+    "DisplayName": "Test - Highly Confidential - Finance",
+    "Comment": "Sensitivity label for financial data (Highly Confidential tier)",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 15,
+    "Name": "Test-HighlyConfidential-Finance",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Test - Highly Confidential - Finance\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Contains sensitive financial data. Restricted to authorized finance personnel only.\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email"
+  },
+  {
+    "LabelActions": [],
+    "EncryptionEnabled": null,
+    "Tooltip": "Business data that could cause harm if shared with unauthorized people.",
+    "Guid": "296f4101-9bd9-4ea5-8d41-ebc6f10e1f76",
+    "Settings": [
+      "[isparent, False]",
+      "[contenttype, File, Email]",
+      "[tooltip, Business data that could cause harm if shared with unauthorized people.]",
+      "[displayname, Demo - Confidential]"
+    ],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-Confidential",
+    "AdvancedSettings": null,
+    "DisplayName": "Demo - Confidential",
+    "Comment": "Parent label for Confidential classification",
+    "ParentId": null,
+    "Conditions": [],
+    "Priority": 18,
+    "Name": "Demo-Confidential",
+    "LocaleSettings": [
+      "{\"LocaleKey\":\"displayName\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Demo - Confidential\"}]}",
+      "{\"LocaleKey\":\"tooltip\",\"Settings\":[{\"Key\":\"default\",\"Value\":\"Business data that could cause harm if shared with unauthorized people.\"}]}"
+    ],
+    "Disabled": false,
+    "ContentType": "File, Email"
+  }
+]

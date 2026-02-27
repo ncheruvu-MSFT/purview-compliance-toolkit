@@ -18,9 +18,13 @@ app-config*.json
 source-app-config.json
 target-app-config.json
 
+# DLP import mapping (contains target tenant GUIDs — never commit)
+dlp-import-mapping.json
+
 # Allow sample/template config (safe - contains only placeholders)
 !app-config.sample.json
 !*-config.sample.json
+!dlp-import-mapping.sample.json
 
 # Credentials and Secrets
 *credentials*

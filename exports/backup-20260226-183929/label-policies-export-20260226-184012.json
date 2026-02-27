@@ -1,0 +1,123 @@
+[
+  {
+    "OneDriveLocation": [],
+    "ModernGroupLocationException": [],
+    "ExchangeLocationException": [],
+    "Guid": "2111a258-9bfd-446f-9dd6-619c10c36fb6",
+    "OneDriveLocationException": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Global sensitivity label policy",
+    "AdvancedSettings": null,
+    "Comment": "Default sensitivity label policy for all users and groups.",
+    "SharePointLocationException": [],
+    "ModernGroupLocation": [],
+    "Name": "Global sensitivity label policy",
+    "ExchangeLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 1,
+          "Value": "Exchange"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "SharePointLocation": [],
+    "Labels": [
+      "defa4170-0d19-0005-000a-bc88714345d2",
+      "defa4170-0d19-0005-0006-bc88714345d2",
+      "defa4170-0d19-0005-0007-bc88714345d2",
+      "defa4170-0d19-0005-0002-bc88714345d2",
+      "defa4170-0d19-0005-0008-bc88714345d2",
+      "defa4170-0d19-0005-0003-bc88714345d2",
+      "defa4170-0d19-0005-0005-bc88714345d2",
+      "defa4170-0d19-0005-0001-bc88714345d2",
+      "defa4170-0d19-0005-000b-bc88714345d2",
+      "defa4170-0d19-0005-0004-bc88714345d2",
+      "defa4170-0d19-0005-0009-bc88714345d2",
+      "defa4170-0d19-0005-0000-bc88714345d2"
+    ],
+    "Enabled": true,
+    "Settings": [
+      "[defaultlabelid, defa4170-0d19-0005-0004-bc88714345d2]",
+      "[teamworkmandatory, false]",
+      "[disablemandatoryinoutlook, true]",
+      "[teamworkdefaultlabelid, defa4170-0d19-0005-0004-bc88714345d2]",
+      "[requiredowngradejustification, true]",
+      "[mandatory, false]",
+      "[powerbimandatory, false]",
+      "[outlookdefaultlabel, defa4170-0d19-0005-0004-bc88714345d2]"
+    ]
+  },
+  {
+    "OneDriveLocation": [],
+    "ModernGroupLocationException": [],
+    "ExchangeLocationException": [],
+    "Guid": "bba06218-8c58-49ab-94db-72a5f7039f42",
+    "OneDriveLocationException": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-Demo-LabelPolicy",
+    "AdvancedSettings": null,
+    "Comment": "Demo: Publishes auto-labeling sensitivity labels to all users",
+    "SharePointLocationException": [],
+    "ModernGroupLocation": [],
+    "Name": "Demo-AutoLabel-Demo-LabelPolicy",
+    "ExchangeLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 1,
+          "Value": "Exchange"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "SharePointLocation": [],
+    "Labels": [
+      "Demo-Confidential-PII",
+      "Demo-HighlyConfidential-Finance"
+    ],
+    "Enabled": true,
+    "Settings": null
+  }
+]

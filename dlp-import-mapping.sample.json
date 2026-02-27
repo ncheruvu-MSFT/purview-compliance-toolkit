@@ -1,0 +1,52 @@
+{
+  "_comment": "Copy this file to dlp-import-mapping.json and fill in your target-tenant values.",
+  "_comment2": "dlp-import-mapping.json is listed in .gitignore — never commit real GUIDs.",
+
+  "//": "─── Transform 1: Name sanitisation (-SanitizeNames) ───────────────────────────",
+  "//1": "Characters listed here are replaced in policy/rule names before import.",
+  "//2": "If this section is omitted the built-in default set is used: | : / \\ < > \" ' ? *",
+  "CharSanitization": {
+    "|":  "_",
+    ":":  "_",
+    "/":  "_",
+    "\\": "_",
+    "<":  "_",
+    ">":  "_"
+  },
+
+  "//3": "─── Transform 2: Locations → All (-LocationsToAll) ────────────────────────────",
+  "//4": "When -LocationsToAll is used, every non-All location value is replaced with 'All'.",
+  "//5": "Exception arrays (e.g. ExchangeLocationException) are replaced with this group.",
+  "//6": "Set to a real distribution group / mail-enabled security group UPN in the target.",
+  "DummyExclusionGroup": "DLPDummyExclusion@contoso.onmicrosoft.com",
+
+  "//7": "─── Transform 3: Printer group ID remapping ───────────────────────────────────",
+  "//8": "Keys = source EndpointDlpLocation/Exception group IDs, values = target IDs.",
+  "PrinterGroupMap": {
+    "SOURCE-PRINTER-GROUP-GUID-1": "TARGET-PRINTER-GROUP-GUID-1",
+    "SOURCE-PRINTER-GROUP-GUID-2": "TARGET-PRINTER-GROUP-GUID-2"
+  },
+
+  "//9":  "─── Transform 4: External domain exceptions → exemption group ─────────────────",
+  "//10": "ExchangeLocationException entries that look like domains are replaced by this ID.",
+  "//11": "Set to the UPN or ObjectId of the global DLP exemption group in the target tenant.",
+  "ExemptionGroupId": "GlobalDlpExemption@contoso.onmicrosoft.com",
+
+  "//12": "─── Transform 5: SIT ID remapping ──────────────────────────────────────────────",
+  "//13": "Keys = source SIT GUIDs, values = corresponding target SIT GUIDs.",
+  "//14": "Find source GUIDs in the export JSON: ContentContainsSensitiveInformation[].id",
+  "SitIdMap": {
+    "SOURCE-SIT-GUID-1": "TARGET-SIT-GUID-1",
+    "SOURCE-SIT-GUID-2": "TARGET-SIT-GUID-2",
+    "SOURCE-SIT-GUID-3": "TARGET-SIT-GUID-3"
+  },
+
+  "//15": "─── Transform 5: Sensitivity label ID remapping ────────────────────────────────",
+  "//16": "Keys = source label GUIDs, values = target label GUIDs.",
+  "//17": "These are used in DLP rules that reference sensitivity labels as conditions.",
+  "LabelIdMap": {
+    "SOURCE-LABEL-GUID-1": "TARGET-LABEL-GUID-1",
+    "SOURCE-LABEL-GUID-2": "TARGET-LABEL-GUID-2",
+    "SOURCE-LABEL-GUID-3": "TARGET-LABEL-GUID-3"
+  }
+}

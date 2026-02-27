@@ -1,0 +1,260 @@
+[
+  {
+    "OneDriveLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 8,
+          "Value": "OneDriveForBusiness"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "SharePointOnlineWorkload": null,
+    "EndpointDlpLocation": [],
+    "Enabled": true,
+    "CreatedBy": "Microsoft Corporation",
+    "Mode": "Enable",
+    "ExchangeLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 1,
+          "Value": "Exchange"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Priority": 0,
+    "Name": "Default Office 365 DLP policy",
+    "EndpointDlpLocationException": [],
+    "SharePointLocationException": [],
+    "ExchangeLocationException": [
+      null
+    ],
+    "ThirdPartyAppDlpLocation": [],
+    "EndpointDlpWorkload": null,
+    "OnPremisesScannerDlpLocation": [],
+    "Type": "Dlp",
+    "Comment": "'This policy detects the presence of credit card numbers in externally shared documents and emails. End users are notified of the detection with the suggestion to consider either removing the sensitive data or restricting the sharing.'",
+    "Guid": "438058fe-8d6e-42b0-ab41-1aab880d5bb8",
+    "OneDriveLocationException": [],
+    "SharePointLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 2,
+          "Value": "SharePoint"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "LastModifiedBy": "Microsoft Corporation",
+    "ThirdPartyAppDlpLocationException": [],
+    "WhenCreated": "2025-12-08T18:07:26-05:00",
+    "ExchangeOnlineWorkload": null,
+    "WhenChanged": "2025-12-08T18:07:53-05:00",
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness",
+    "TeamsWorkload": null,
+    "OneDriveForBusinessWorkload": null,
+    "TeamsLocationException": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Default Office 365 DLP policy",
+    "OnPremisesScannerDlpLocationException": [],
+    "TeamsLocation": []
+  },
+  {
+    "OneDriveLocation": [],
+    "SharePointOnlineWorkload": null,
+    "EndpointDlpLocation": [],
+    "Enabled": true,
+    "CreatedBy": "Microsoft Corporation",
+    "Mode": "Enable",
+    "ExchangeLocation": [],
+    "Priority": 1,
+    "Name": "Default policy for Teams",
+    "EndpointDlpLocationException": [],
+    "SharePointLocationException": [],
+    "ExchangeLocationException": [
+      null
+    ],
+    "ThirdPartyAppDlpLocation": [],
+    "EndpointDlpWorkload": null,
+    "OnPremisesScannerDlpLocation": [],
+    "Type": "Dlp",
+    "Comment": "\"This policy detects the presence of credit card numbers in Teams chats and channel messages. When this sensitive info is detected, admins will receive an alert but policy tips won't be displayed to users. You can edit these actions at any time.\"",
+    "Guid": "cf962d18-4601-4de1-848f-c6e9f2dcdf9f",
+    "OneDriveLocationException": [],
+    "SharePointLocation": [],
+    "LastModifiedBy": "Microsoft Corporation",
+    "ThirdPartyAppDlpLocationException": [],
+    "WhenCreated": "2025-12-08T18:07:58-05:00",
+    "ExchangeOnlineWorkload": null,
+    "WhenChanged": "2025-12-08T18:08:13-05:00",
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness, Teams",
+    "TeamsWorkload": null,
+    "OneDriveForBusinessWorkload": null,
+    "TeamsLocationException": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Default policy for Teams",
+    "OnPremisesScannerDlpLocationException": [],
+    "TeamsLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 2048,
+          "Value": "Teams"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ]
+  },
+  {
+    "OneDriveLocation": [],
+    "SharePointOnlineWorkload": null,
+    "EndpointDlpLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 8192,
+          "Value": "EndpointDevices"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Enabled": true,
+    "CreatedBy": "Microsoft Corporation",
+    "Mode": "Enable",
+    "ExchangeLocation": [],
+    "Priority": 2,
+    "Name": "Default policy for devices",
+    "EndpointDlpLocationException": [],
+    "SharePointLocationException": [],
+    "ExchangeLocationException": [
+      null
+    ],
+    "ThirdPartyAppDlpLocation": [],
+    "EndpointDlpWorkload": null,
+    "OnPremisesScannerDlpLocation": [],
+    "Type": "Dlp",
+    "Comment": "This policy detects the presence of credit card numbers in files on devices when users perform specific activities (such as printing a file). When detected, the activity is only audited (not blocked). Admins will receive an alert, but policy tips won't be displayed to users. You can edit these actions at any time.",
+    "Guid": "094534e1-ce0f-4742-8ce4-f26b04495439",
+    "OneDriveLocationException": [],
+    "SharePointLocation": [],
+    "LastModifiedBy": "Microsoft Corporation",
+    "ThirdPartyAppDlpLocationException": [],
+    "WhenCreated": "2025-12-08T18:08:15-05:00",
+    "ExchangeOnlineWorkload": null,
+    "WhenChanged": "2025-12-08T18:08:31-05:00",
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness, EndpointDevices",
+    "TeamsWorkload": null,
+    "OneDriveForBusinessWorkload": null,
+    "TeamsLocationException": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Default policy for devices",
+    "OnPremisesScannerDlpLocationException": [],
+    "TeamsLocation": []
+  }
+]

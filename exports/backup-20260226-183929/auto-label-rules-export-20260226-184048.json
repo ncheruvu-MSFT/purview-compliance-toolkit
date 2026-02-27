@@ -1,0 +1,182 @@
+[
+  {
+    "ContentContainsSensitiveInformation": [
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Demo-Employee-ID",
+        "maxcount": "-1",
+        "id": "cdac447a-a08e-4c9f-9a2e-42b6d53f1a29",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      },
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Demo-Customer-Reference",
+        "maxcount": "-1",
+        "id": "06d84277-817d-4c75-aad5-e2571d4ed9b8",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      }
+    ],
+    "ContentExtensionMatchesWords": [],
+    "ParentPolicyName": "Demo-AutoLabel-PII-Policy",
+    "SentTo": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-PII-Policy-Rule",
+    "DocumentIsUnsupported": false,
+    "ContentPropertyContainsWords": [],
+    "Comment": "",
+    "Name": "Demo-AutoLabel-PII-Policy-Rule",
+    "RecipientDomainIs": [],
+    "Priority": 0,
+    "AnyOfRecipientAddressMatchesPatterns": [],
+    "SenderIPRanges": [],
+    "DocumentIsPasswordProtected": false,
+    "Guid": "cf5b4c48-7f77-45bf-a3d1-cbe41420eab8",
+    "Disabled": false,
+    "ExceptIfContentContainsSensitiveInformation": null,
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness, PowerBI, Applications, Azure, AWS",
+    "SubjectMatchesPatterns": [],
+    "DocumentNameMatchesPatterns": null,
+    "FromAddressMatchesPatterns": [],
+    "HeaderMatchesPatterns": null
+  },
+  {
+    "ContentContainsSensitiveInformation": [
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Demo-Employee-ID",
+        "maxcount": "-1",
+        "id": "cdac447a-a08e-4c9f-9a2e-42b6d53f1a29",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      },
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Demo-Customer-Reference",
+        "maxcount": "-1",
+        "id": "06d84277-817d-4c75-aad5-e2571d4ed9b8",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      }
+    ],
+    "ContentExtensionMatchesWords": [],
+    "ParentPolicyName": "Demo-AutoLabel-PII-Policy",
+    "SentTo": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-PII-Policy-Exchange-Rule",
+    "DocumentIsUnsupported": false,
+    "ContentPropertyContainsWords": [],
+    "Comment": "",
+    "Name": "Demo-AutoLabel-PII-Policy-Exchange-Rule",
+    "RecipientDomainIs": [],
+    "Priority": 1,
+    "AnyOfRecipientAddressMatchesPatterns": [],
+    "SenderIPRanges": [],
+    "DocumentIsPasswordProtected": false,
+    "Guid": "4de30358-3485-42bf-89d0-85b45b6c0c20",
+    "Disabled": false,
+    "ExceptIfContentContainsSensitiveInformation": null,
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness, PowerBI, Applications, Azure, AWS",
+    "SubjectMatchesPatterns": [],
+    "DocumentNameMatchesPatterns": null,
+    "FromAddressMatchesPatterns": [],
+    "HeaderMatchesPatterns": null
+  },
+  {
+    "ContentContainsSensitiveInformation": [
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Demo-Product-Code",
+        "maxcount": "-1",
+        "id": "5c073e7d-fc32-4ead-9398-e28cdc3fdb27",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      },
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Credit Card Number",
+        "maxcount": "-1",
+        "id": "50842eb7-edc8-4019-85dd-5a5c1f2bb085",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      }
+    ],
+    "ContentExtensionMatchesWords": [],
+    "ParentPolicyName": "Demo-AutoLabel-Finance",
+    "SentTo": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-Finance-Rule",
+    "DocumentIsUnsupported": false,
+    "ContentPropertyContainsWords": [],
+    "Comment": "",
+    "Name": "Demo-AutoLabel-Finance-Rule",
+    "RecipientDomainIs": [],
+    "Priority": 0,
+    "AnyOfRecipientAddressMatchesPatterns": [],
+    "SenderIPRanges": [],
+    "DocumentIsPasswordProtected": false,
+    "Guid": "e2a23462-a009-4d97-94fc-fe8b44866723",
+    "Disabled": false,
+    "ExceptIfContentContainsSensitiveInformation": null,
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness, PowerBI, Applications, Azure, AWS",
+    "SubjectMatchesPatterns": [],
+    "DocumentNameMatchesPatterns": null,
+    "FromAddressMatchesPatterns": [],
+    "HeaderMatchesPatterns": null
+  },
+  {
+    "ContentContainsSensitiveInformation": [
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Demo-Product-Code",
+        "maxcount": "-1",
+        "id": "5c073e7d-fc32-4ead-9398-e28cdc3fdb27",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      },
+      {
+        "confidencelevel": "Medium",
+        "minconfidence": "75",
+        "mincount": "1",
+        "name": "Credit Card Number",
+        "maxcount": "-1",
+        "id": "50842eb7-edc8-4019-85dd-5a5c1f2bb085",
+        "classifiertype": "Content",
+        "maxconfidence": "100"
+      }
+    ],
+    "ContentExtensionMatchesWords": [],
+    "ParentPolicyName": "Demo-AutoLabel-Finance",
+    "SentTo": [],
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-Finance-Exchange-Rule",
+    "DocumentIsUnsupported": false,
+    "ContentPropertyContainsWords": [],
+    "Comment": "",
+    "Name": "Demo-AutoLabel-Finance-Exchange-Rule",
+    "RecipientDomainIs": [],
+    "Priority": 1,
+    "AnyOfRecipientAddressMatchesPatterns": [],
+    "SenderIPRanges": [],
+    "DocumentIsPasswordProtected": false,
+    "Guid": "bc0aba14-3e4c-45e5-b1a1-31b1b588653b",
+    "Disabled": false,
+    "ExceptIfContentContainsSensitiveInformation": null,
+    "Workload": "Exchange, SharePoint, OneDriveForBusiness, PowerBI, Applications, Azure, AWS",
+    "SubjectMatchesPatterns": [],
+    "DocumentNameMatchesPatterns": null,
+    "FromAddressMatchesPatterns": [],
+    "HeaderMatchesPatterns": null
+  }
+]

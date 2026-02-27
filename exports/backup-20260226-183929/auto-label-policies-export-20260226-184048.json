@@ -1,0 +1,332 @@
+[
+  {
+    "Comment": "Automatically labels content containing PII data (Employee IDs, Customer References)",
+    "ExternalMailRightsManagementOwner": null,
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-PII-Policy",
+    "WhenCreated": "2026-02-10T14:01:22-05:00",
+    "OneDriveLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 8,
+          "Value": "OneDriveForBusiness"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Guid": "5ae3b5ff-34f3-4940-b3ea-a513fad8bccf",
+    "ApplySensitivityLabel": "Demo-Confidential-PII",
+    "Mode": "TestWithoutNotifications",
+    "ExchangeLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 1,
+          "Value": "Exchange"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Name": "Demo-AutoLabel-PII-Policy",
+    "OneDriveLocationException": [],
+    "Priority": 0,
+    "SharePointLocationException": [],
+    "Enabled": true,
+    "OverwriteLabel": false,
+    "SharePointLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 2,
+          "Value": "SharePoint"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "WhenChanged": "2026-02-10T14:01:39-05:00",
+    "ExchangeLocationException": []
+  },
+  {
+    "Comment": "Automatically labels content containing financial data (Product Codes, Credit Card Numbers)",
+    "ExternalMailRightsManagementOwner": null,
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-Finance",
+    "WhenCreated": "2026-02-10T14:29:59-05:00",
+    "OneDriveLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 8,
+          "Value": "OneDriveForBusiness"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Guid": "8a787908-708a-4ac0-bb08-e108e1dec285",
+    "ApplySensitivityLabel": "Demo-HighlyConfidential-Finance",
+    "Mode": "TestWithoutNotifications",
+    "ExchangeLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 1,
+          "Value": "Exchange"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Name": "Demo-AutoLabel-Finance",
+    "OneDriveLocationException": [],
+    "Priority": 1,
+    "SharePointLocationException": [],
+    "Enabled": true,
+    "OverwriteLabel": false,
+    "SharePointLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 2,
+          "Value": "SharePoint"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "WhenChanged": "2026-02-10T15:05:10-05:00",
+    "ExchangeLocationException": []
+  },
+  {
+    "Comment": "Automatically labels content containing financial data (Product Codes, Credit Card Numbers)",
+    "ExternalMailRightsManagementOwner": null,
+    "Identity": "FFO.extest.microsoft.com/Microsoft Exchange Hosted Organizations/MngEnvMCAP219373.onmicrosoft.com/Configuration/Demo-AutoLabel-Finance-Policy",
+    "WhenCreated": "2026-02-10T11:36:26-05:00",
+    "OneDriveLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 8,
+          "Value": "OneDriveForBusiness"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Guid": "1ec23bc6-9ab6-45ae-a56d-dc7e35f71343",
+    "ApplySensitivityLabel": "Demo-HighlyConfidential-Finance",
+    "Mode": "PendingDeletion",
+    "ExchangeLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 1,
+          "Value": "Exchange"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "Name": "Demo-AutoLabel-Finance-Policy",
+    "OneDriveLocationException": [],
+    "Priority": 2,
+    "SharePointLocationException": [],
+    "Enabled": true,
+    "OverwriteLabel": false,
+    "SharePointLocation": [
+      {
+        "DisplayName": "All",
+        "Name": "All",
+        "ImmutableIdentity": "All",
+        "Type": {
+          "value": 1,
+          "Value": "Tenant"
+        },
+        "Status": {
+          "value": 2,
+          "Value": "Success"
+        },
+        "Workload": {
+          "value": 2,
+          "Value": "SharePoint"
+        },
+        "SourceType": null,
+        "SourceTypeDisplayName": null,
+        "SourceProvider": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SourceEntryType": {
+          "value": 0,
+          "Value": "Unknown"
+        },
+        "SchemaVersion": 2,
+        "Resources": null
+      }
+    ],
+    "WhenChanged": "2026-02-10T11:37:28-05:00",
+    "ExchangeLocationException": []
+  }
+]

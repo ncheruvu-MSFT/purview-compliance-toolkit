@@ -10,33 +10,97 @@
     1. DLP policies (must exist before rules)
     2. DLP rules (linked to their parent policy by name)
 
+    Optional transform layer (-MappingFile / switches) performs these cleanups
+    before any tenant write, matching the 5 "dirty tricks" used for cross-tenant
+    or prod→test migrations:
+
+    Transform 1 — Name sanitisation (-SanitizeNames)
+        Replaces PS-unfriendly characters (|, :, /, \, etc.) with "_" in policy
+        and rule names.
+
+    Transform 2 — Locations → All (-LocationsToAll)
+        Replaces every specific location (user/group UPN or GUID) with "All".
+        Location *exceptions* (…Exception arrays) are replaced with the value of
+        MappingFile.DummyExclusionGroup so the scope stays broad but is not open
+        to literally everyone. A console warning is printed for each policy that
+        needs manual follow-up.
+
+    Transform 3 — Printer group remapping (MappingFile.PrinterGroupMap)
+        Swaps source endpoint printer-group IDs for their target equivalents in
+        EndpointDlpLocation and EndpointDlpLocationException.
+
+    Transform 4 — External domain exception → exemption group (MappingFile.ExemptionGroupId)
+        ExchangeLocationException entries that look like domains (@domain.com or
+        domain.com) are removed and the ExemptionGroupId is injected instead.
+
+    Transform 5 — Label and SIT ID remapping (MappingFile.LabelIdMap / .SitIdMap)
+        Walks each rule's ContentContainsSensitiveInformation array. Replaces
+        every SIT "id" field found in SitIdMap and every label GUID found in
+        LabelIdMap with the corresponding target ID.
+
 .PARAMETER PoliciesFile
-    Path to the DLP policies JSON export file
+    Path to the DLP policies JSON export file.
 
 .PARAMETER RulesFile
-    Optional path to the DLP rules JSON export file
+    Optional path to the DLP rules JSON export file.
+
+.PARAMETER MappingFile
+    Optional path to a JSON mapping configuration file.
+    See dlp-import-mapping.sample.json for the expected schema.
+    Enables Transforms 3, 4, and 5 automatically when the relevant sections are
+    present. Also provides DummyExclusionGroup used by -LocationsToAll.
+
+.PARAMETER LocationsToAll
+    Enable Transform 2: replace all specific location values with "All" and
+    route location exceptions to MappingFile.DummyExclusionGroup.
+    Requires MappingFile.DummyExclusionGroup to be set if any exceptions exist.
+
+.PARAMETER SanitizeNames
+    Enable Transform 1: replace PS-unfriendly characters in policy/rule names
+    with "_". Uses MappingFile.CharSanitization map if provided, otherwise
+    applies the built-in default set ( | : / \ ).
 
 .PARAMETER SkipExisting
-    Skip policies/rules that already exist on the target (default: update them)
+    Skip policies/rules that already exist on the target (default: update them).
 
 .PARAMETER TestMode
-    Import policies in TestWithNotifications mode for safe testing
+    Import policies in TestWithNotifications mode for safe testing.
 
 .PARAMETER Force
-    Suppress confirmation prompts
+    Suppress confirmation prompts.
 
 .PARAMETER WhatIf
-    Show what would be imported without making changes
+    Show what would be imported without making changes.
 
 .EXAMPLE
-    .\08-Import-DlpPolicies.ps1 -PoliciesFile ".\exports\dlp-policies-export-20260226-120000.json" -RulesFile ".\exports\dlp-rules-export-20260226-120000.json"
+    # Straight import — no transforms
+    .\08-Import-DlpPolicies.ps1 `
+        -PoliciesFile ".\exports\dlp-policies-export-20260226-120000.json" `
+        -RulesFile    ".\exports\dlp-rules-export-20260226-120000.json"
 
 .EXAMPLE
-    .\08-Import-DlpPolicies.ps1 -PoliciesFile ".\exports\dlp-policies-export-20260226-120000.json" -TestMode
+    # Full prod→test migration with all 5 transforms
+    .\08-Import-DlpPolicies.ps1 `
+        -PoliciesFile  ".\exports\dlp-policies-export-20260226-120000.json" `
+        -RulesFile     ".\exports\dlp-rules-export-20260226-120000.json" `
+        -MappingFile   ".\dlp-import-mapping.json" `
+        -LocationsToAll `
+        -SanitizeNames `
+        -TestMode
+
+.EXAMPLE
+    # Dry run — see what would be created without touching the tenant
+    .\08-Import-DlpPolicies.ps1 `
+        -PoliciesFile ".\exports\dlp-policies-export-20260226-120000.json" `
+        -MappingFile  ".\dlp-import-mapping.json" `
+        -LocationsToAll -SanitizeNames -WhatIf
 
 .NOTES
     Must be connected to the TARGET tenant's Security & Compliance PowerShell.
     Run: .\01-Connect-Tenant.ps1 -TenantType Target
+
+    Copy dlp-import-mapping.sample.json → dlp-import-mapping.json and fill in
+    the target-tenant GUIDs before running with -MappingFile.
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -49,6 +113,12 @@ param(
     [ValidateScript({ Test-Path $_ })]
     [string]$RulesFile,
 
+    [Parameter(Mandatory = $false)]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$MappingFile,
+
+    [switch]$LocationsToAll,
+    [switch]$SanitizeNames,
     [switch]$SkipExisting,
     [switch]$TestMode,
     [switch]$Force
@@ -88,15 +158,130 @@ function Get-LocationNames {
     } | Where-Object { $_ -ne $null })
 }
 
+# ── Transform 1: Name sanitisation ───────────────────────────────────
+# Replaces characters that are troublesome in PowerShell command values.
+function Invoke-NameSanitization {
+    param([string]$Name, [hashtable]$CharMap)
+    $result = $Name
+    if ($CharMap -and $CharMap.Count -gt 0) {
+        foreach ($k in $CharMap.Keys) { $result = $result.Replace($k, $CharMap[$k]) }
+    } else {
+        # Built-in defaults
+        foreach ($ch in @('|',':','/','\','<','>','"',"'",'?','*')) {
+            $result = $result.Replace($ch, '_')
+        }
+    }
+    return $result.Trim()
+}
+
+# ── Transform 2: Locations → All ─────────────────────────────────────
+# Replaces specific location arrays with @('All').
+# Replaces exception arrays with the DummyExclusionGroup.
+function Invoke-LocationToAll {
+    param(
+        [PSCustomObject]$Policy,
+        [string]$DummyExclusionGroup
+    )
+    $locationProps  = @('ExchangeLocation','SharePointLocation','OneDriveLocation',
+                        'TeamsLocation','EndpointDlpLocation','OnPremisesScannerDlpLocation',
+                        'ThirdPartyAppDlpLocation')
+    $exceptionProps = @('ExchangeLocationException','SharePointLocationException',
+                        'OneDriveLocationException','TeamsLocationException',
+                        'EndpointDlpLocationException','OnPremisesScannerDlpLocationException',
+                        'ThirdPartyAppDlpLocationException')
+    $warnings = @()
+
+    foreach ($prop in $locationProps) {
+        $val = Get-LocationNames $Policy.$prop
+        if ($val.Count -gt 0 -and -not ($val.Count -eq 1 -and $val[0] -eq 'All')) {
+            $Policy.$prop = @('All')
+            $warnings += "  ⚠️  $prop → 'All'  (was: $($val -join ', '))"
+        }
+    }
+    foreach ($prop in $exceptionProps) {
+        $val = Get-LocationNames $Policy.$prop
+        if ($val.Count -gt 0) {
+            if ($DummyExclusionGroup) {
+                $Policy.$prop = @($DummyExclusionGroup)
+                $warnings += "  ⚠️  $prop → DummyExclusionGroup  (was: $($val -join ', '))"
+            } else {
+                $warnings += "  ⚠️  $prop has exceptions but no DummyExclusionGroup set — left unchanged: $($val -join ', ')"
+            }
+        }
+    }
+    return $warnings
+}
+
+# ── Transform 3: Printer group ID remapping ───────────────────────────
+# Remaps EndpointDlpLocation / EndpointDlpLocationException entries by
+# matching against PrinterGroupMap keys.
+function Invoke-PrinterGroupRemap {
+    param([PSCustomObject]$Policy, [hashtable]$PrinterGroupMap)
+    if (-not $PrinterGroupMap -or $PrinterGroupMap.Count -eq 0) { return }
+    foreach ($prop in @('EndpointDlpLocation','EndpointDlpLocationException')) {
+        $vals = Get-LocationNames $Policy.$prop
+        if ($vals.Count -gt 0) {
+            $remapped = @($vals | ForEach-Object {
+                if ($PrinterGroupMap.ContainsKey($_)) { $PrinterGroupMap[$_] } else { $_ }
+            })
+            $Policy.$prop = $remapped
+        }
+    }
+}
+
+# ── Transform 4: External domain exceptions → exemption group ────────
+# Any ExchangeLocationException entry that looks like a domain
+# (starts with @ or contains a dot but no spaces) is removed and
+# replaced with ExemptionGroupId.
+function Invoke-ExternalDomainTransform {
+    param([PSCustomObject]$Policy, [string]$ExemptionGroupId)
+    if (-not $ExemptionGroupId) { return $false }
+    $vals    = @(Get-LocationNames $Policy.ExchangeLocationException)
+    $domains = @($vals | Where-Object { $_ -match '^@|^[^@\s]+\.[^@\s]+$' })
+    if ($domains.Count -eq 0) { return $false }
+    $keep    = @($vals | Where-Object { $_ -notmatch '^@|^[^@\s]+\.[^@\s]+$' })
+    $keep   += $ExemptionGroupId
+    $Policy.ExchangeLocationException = $keep
+    return $true
+}
+
+# ── Transform 5: Label and SIT ID remapping in rules ─────────────────
+# Walks ContentContainsSensitiveInformation and replaces GUIDs using
+# the provided maps. Works on both array-of-hashtable and JSON objects.
+function Invoke-IdRemap {
+    param([PSCustomObject]$Rule, [hashtable]$SitIdMap, [hashtable]$LabelIdMap)
+    if (-not $Rule.ContentContainsSensitiveInformation) { return }
+    $remapped = @()
+    foreach ($item in $Rule.ContentContainsSensitiveInformation) {
+        # Convert PSCustomObject → hashtable for easy mutation
+        $ht = @{}
+        $item.PSObject.Properties | ForEach-Object { $ht[$_.Name] = $_.Value }
+
+        # SIT id field
+        if ($ht.ContainsKey('id') -and $SitIdMap -and $SitIdMap.ContainsKey($ht['id'])) {
+            $ht['id'] = $SitIdMap[$ht['id']]
+        }
+        # Label GUID embedded in SIT conditions
+        if ($ht.ContainsKey('labelId') -and $LabelIdMap -and $LabelIdMap.ContainsKey($ht['labelId'])) {
+            $ht['labelId'] = $LabelIdMap[$ht['labelId']]
+        }
+        $remapped += $ht
+    }
+    $Rule.ContentContainsSensitiveInformation = $remapped
+}
+
 Write-Host "🛡️  Importing DLP policies to TARGET tenant..." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Policies file: $PoliciesFile" -ForegroundColor Gray
-if ($RulesFile)  { Write-Host "   Rules file:    $RulesFile" -ForegroundColor Gray }
-if ($TestMode)   { Write-Host "   ⚠️  Test mode:   Policies will be created in TestWithNotifications mode" -ForegroundColor Yellow }
+if ($RulesFile)    { Write-Host "   Rules file:    $RulesFile"    -ForegroundColor Gray }
+if ($MappingFile)  { Write-Host "   Mapping file:  $MappingFile"  -ForegroundColor Gray }
+if ($SanitizeNames){ Write-Host "   🔧 Transform 1: Name sanitisation — ON"  -ForegroundColor DarkYellow }
+if ($LocationsToAll){ Write-Host "   🔧 Transform 2: Locations → All — ON"   -ForegroundColor DarkYellow }
+if ($TestMode)     { Write-Host "   ⚠️  Test mode:   Policies will be created in TestWithNotifications mode" -ForegroundColor Yellow }
 Write-Host ""
 
 # ─────────────────────────────────────────────────────────────────────
-# STEP 1: Load and validate source data
+# STEP 1: Load source data
 # ─────────────────────────────────────────────────────────────────────
 Write-Host "⏳ Step 1: Loading DLP policy definitions..." -ForegroundColor Yellow
 
@@ -111,9 +296,141 @@ if ($RulesFile) {
 Write-Host ""
 
 # ─────────────────────────────────────────────────────────────────────
-# STEP 2: Import DLP policies
+# STEP 2: Load mapping / transform configuration
 # ─────────────────────────────────────────────────────────────────────
-Write-Host "⏳ Step 2: Importing DLP policies..." -ForegroundColor Yellow
+$mapping           = $null
+$charMap           = @{}
+$labelIdMap        = @{}
+$sitIdMap          = @{}
+$printerGroupMap   = @{}
+$exemptionGroupId  = $null
+$dummyExclusionGroup = $null
+
+if ($MappingFile) {
+    Write-Host "⏳ Step 2: Loading mapping configuration..." -ForegroundColor Yellow
+    try {
+        $mapping = Get-Content $MappingFile -Raw | ConvertFrom-Json
+        Write-Host "   ✅ Mapping file loaded" -ForegroundColor Green
+
+        if ($mapping.CharSanitization) {
+            $mapping.CharSanitization.PSObject.Properties | ForEach-Object { $charMap[$_.Name] = $_.Value }
+            Write-Host "   🔧 T1 CharSanitization: $($charMap.Count) rule(s)" -ForegroundColor DarkGray
+        }
+        if ($mapping.LabelIdMap) {
+            $mapping.LabelIdMap.PSObject.Properties | ForEach-Object { $labelIdMap[$_.Name] = $_.Value }
+            Write-Host "   🔧 T5 LabelIdMap:        $($labelIdMap.Count) mapping(s)" -ForegroundColor DarkGray
+        }
+        if ($mapping.SitIdMap) {
+            $mapping.SitIdMap.PSObject.Properties | ForEach-Object { $sitIdMap[$_.Name] = $_.Value }
+            Write-Host "   🔧 T5 SitIdMap:          $($sitIdMap.Count) mapping(s)" -ForegroundColor DarkGray
+        }
+        if ($mapping.PrinterGroupMap) {
+            $mapping.PrinterGroupMap.PSObject.Properties | ForEach-Object { $printerGroupMap[$_.Name] = $_.Value }
+            Write-Host "   🔧 T3 PrinterGroupMap:   $($printerGroupMap.Count) mapping(s)" -ForegroundColor DarkGray
+        }
+        if ($mapping.ExemptionGroupId) {
+            $exemptionGroupId = $mapping.ExemptionGroupId
+            Write-Host "   🔧 T4 ExemptionGroupId:  $exemptionGroupId" -ForegroundColor DarkGray
+        }
+        if ($mapping.DummyExclusionGroup) {
+            $dummyExclusionGroup = $mapping.DummyExclusionGroup
+            Write-Host "   🔧 T2 DummyExclusionGroup: $dummyExclusionGroup" -ForegroundColor DarkGray
+        }
+    } catch {
+        Write-Host "   ❌ Failed to load mapping file: $($_.Exception.Message)" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host ""
+} else {
+    Write-Host "⏩ Step 2: No mapping file — transforms 3/4/5 disabled" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 3: Apply transforms (in-memory, before any tenant write)
+# ─────────────────────────────────────────────────────────────────────
+$anyTransform = $SanitizeNames -or $LocationsToAll -or $printerGroupMap.Count -gt 0 `
+                -or $exemptionGroupId -or $labelIdMap.Count -gt 0 -or $sitIdMap.Count -gt 0
+
+if ($anyTransform) {
+    Write-Host "⏳ Step 3: Applying transforms..." -ForegroundColor Yellow
+
+    # Build a name→sanitised-name map so rules can track their parent policy rename
+    $policyNameMap = @{}   # oldName → newName
+
+    foreach ($policy in $sourcePolicies) {
+        $originalName = $policy.Name
+
+        # T1 — Name sanitisation
+        if ($SanitizeNames) {
+            $cleanName = Invoke-NameSanitization -Name $policy.Name -CharMap $charMap
+            if ($cleanName -ne $policy.Name) {
+                Write-Host "   T1 ✏️  '$($policy.Name)' → '$cleanName'" -ForegroundColor DarkYellow
+                $policyNameMap[$policy.Name] = $cleanName
+                $policy.Name = $cleanName
+            }
+        }
+
+        # T2 — Locations → All
+        if ($LocationsToAll) {
+            $warnings = Invoke-LocationToAll -Policy $policy -DummyExclusionGroup $dummyExclusionGroup
+            if ($warnings.Count -gt 0) {
+                Write-Host "   T2 📋 $($policy.Name):" -ForegroundColor DarkYellow
+                $warnings | ForEach-Object { Write-Host "     $_" -ForegroundColor DarkGray }
+                Write-Host "     💡 TODO: Manually assign correct groups/users in Purview portal." -ForegroundColor Yellow
+            }
+        }
+
+        # T3 — Printer group remapping
+        if ($printerGroupMap.Count -gt 0) {
+            Invoke-PrinterGroupRemap -Policy $policy -PrinterGroupMap $printerGroupMap
+        }
+
+        # T4 — External domain exceptions → exemption group
+        if ($exemptionGroupId) {
+            $changed = Invoke-ExternalDomainTransform -Policy $policy -ExemptionGroupId $exemptionGroupId
+            if ($changed) {
+                Write-Host "   T4 🌐 $($policy.Name): domain exceptions replaced with exemption group" -ForegroundColor DarkYellow
+            }
+        }
+    }
+
+    # T1 — Sanitise rule names and fix parent policy references
+    if ($SanitizeNames -or $policyNameMap.Count -gt 0) {
+        foreach ($rule in $sourceRules) {
+            if ($SanitizeNames) {
+                $cleanName = Invoke-NameSanitization -Name $rule.Name -CharMap $charMap
+                if ($cleanName -ne $rule.Name) {
+                    Write-Host "   T1 ✏️  Rule '$($rule.Name)' → '$cleanName'" -ForegroundColor DarkYellow
+                    $rule.Name = $cleanName
+                }
+            }
+            # Remap ParentPolicyName if the policy was renamed
+            if ($policyNameMap.ContainsKey($rule.ParentPolicyName)) {
+                $rule.ParentPolicyName = $policyNameMap[$rule.ParentPolicyName]
+            }
+        }
+    }
+
+    # T5 — SIT and Label ID remapping in rules
+    if ($sitIdMap.Count -gt 0 -or $labelIdMap.Count -gt 0) {
+        foreach ($rule in $sourceRules) {
+            Invoke-IdRemap -Rule $rule -SitIdMap $sitIdMap -LabelIdMap $labelIdMap
+        }
+        Write-Host "   T5 🔑 SIT/Label ID remapping applied to $($sourceRules.Count) rule(s)" -ForegroundColor DarkYellow
+    }
+
+    Write-Host "   ✅ Transforms complete" -ForegroundColor Green
+    Write-Host ""
+} else {
+    Write-Host "⏩ Step 3: No transforms configured — importing as-is" -ForegroundColor DarkGray
+    Write-Host ""
+}
+
+# ─────────────────────────────────────────────────────────────────────
+# STEP 4: Import DLP policies
+# ─────────────────────────────────────────────────────────────────────
+Write-Host "⏳ Step 4: Importing DLP policies..." -ForegroundColor Yellow
 
 $created  = 0
 $updated  = 0
@@ -185,10 +502,10 @@ foreach ($policy in $sourcePolicies) {
 Write-Host ""
 
 # ─────────────────────────────────────────────────────────────────────
-# STEP 3: Import DLP rules
+# STEP 5: Import DLP rules
 # ─────────────────────────────────────────────────────────────────────
 if ($sourceRules.Count -gt 0) {
-    Write-Host "⏳ Step 3: Importing DLP rules..." -ForegroundColor Yellow
+    Write-Host "⏳ Step 5: Importing DLP rules..." -ForegroundColor Yellow
     
     $rCreated  = 0
     $rUpdated  = 0
@@ -273,7 +590,7 @@ if ($sourceRules.Count -gt 0) {
     }
     Write-Host ""
 } else {
-    Write-Host "⏩ Step 3: No rules file specified — skipping rule import" -ForegroundColor DarkGray
+    Write-Host "⏩ Step 5: No rules file specified — skipping rule import" -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -289,4 +606,8 @@ if ($TestMode) {
     Write-Host "💡 Policies were imported in TestWithNotifications mode." -ForegroundColor Yellow
     Write-Host "   Review results in the Purview compliance portal, then enable with:" -ForegroundColor Yellow
     Write-Host "   Set-DlpCompliancePolicy -Identity '<name>' -Mode 'Enable'" -ForegroundColor Yellow
+}
+if ($LocationsToAll) {
+    Write-Host "💡 Locations were set to 'All'. Policies marked with TODO need manual group" -ForegroundColor Yellow
+    Write-Host "   assignment in the Purview portal before enabling in production." -ForegroundColor Yellow
 }

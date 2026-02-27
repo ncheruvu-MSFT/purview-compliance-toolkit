@@ -1,0 +1,25 @@
+{
+  "ElapsedSeconds": 91.4,
+  "BackupPath": "C:\\Git\\AZ\\purview-compliance-toolkit\\exports\\backup-20260226-183929",
+  "Errors": [],
+  "CompletedAt": "2026-02-26 18:41:00",
+  "Components": {
+    "CustomSITs": {
+      "Status": "Success",
+      "Script": "03-Export-Custom-SITs.ps1"
+    },
+    "AutoLabeling": {
+      "Status": "Success",
+      "Script": "09-Export-AutoLabelPolicies.ps1"
+    },
+    "Labels": {
+      "Status": "Success",
+      "Script": "05-Export-SensitivityLabels.ps1"
+    },
+    "DLPPolicies": {
+      "Status": "Success",
+      "Script": "07-Export-DlpPolicies.ps1"
+    }
+  },
+  "BackupTimestamp": "20260226-183929"
+}
