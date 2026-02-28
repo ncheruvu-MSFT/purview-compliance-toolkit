@@ -41,8 +41,14 @@ try {
     $null = Get-DlpSensitiveInformationType -Identity "Credit Card Number" -ErrorAction Stop
 } catch {
     Write-Host "❌ Not connected to Security & Compliance PowerShell" -ForegroundColor Red
-    Write-Host "   Run: .\01-Connect-Tenant.ps1 first" -ForegroundColor Yellow
+    Write-Host "   Run: .\01-Connect-Tenant.ps1 -TenantType Source" -ForegroundColor Yellow
     exit 1
+}
+
+# ── Target-tenant safety warning ──────────────────────────────────────────────
+if ($env:PURVIEW_TENANT_TYPE -eq 'Target') {
+    Write-Host "⚠️  WARNING: Session is marked as TARGET tenant ($env:PURVIEW_CONNECTED_ORG)." -ForegroundColor Yellow
+    Write-Host "   Export scripts should run against the SOURCE tenant. Continue only if intentional." -ForegroundColor Yellow
 }
 
 # ── Helper: flatten location objects to simple name strings ────────────

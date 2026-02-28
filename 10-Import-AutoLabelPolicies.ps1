@@ -72,6 +72,17 @@ try {
     exit 1
 }
 
+# ── Source-tenant safety guard ────────────────────────────────────────────────
+if ($env:PURVIEW_TENANT_TYPE -eq 'Source') {
+    Write-Host "❌ SAFETY BLOCK: Session is marked as SOURCE tenant ($env:PURVIEW_CONNECTED_ORG)." -ForegroundColor Red
+    Write-Host "   Import scripts must ONLY run against the TARGET tenant." -ForegroundColor Red
+    Write-Host "   Reconnect: .\01-Connect-Tenant.ps1 -TenantType Target" -ForegroundColor Yellow
+    exit 1
+}
+if (-not $env:PURVIEW_TENANT_TYPE) {
+    Write-Host "⚠️  Tenant type not confirmed — connect via .\01-Connect-Tenant.ps1 -TenantType Target to enable safety checks." -ForegroundColor Yellow
+}
+
 # ── Helper: safe JSON import (handles case-conflicting keys from older exports) ─
 function ConvertFrom-JsonSafe {
     param([string]$JsonText)

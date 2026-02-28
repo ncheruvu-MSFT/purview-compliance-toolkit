@@ -144,6 +144,11 @@ try {
     Write-Host "   Tenant Type: $TenantType" -ForegroundColor Gray
     
     Write-Host "`n✅ Ready to proceed with SIT operations" -ForegroundColor Green
+
+    # ── Stamp tenant-type so import/export scripts can enforce source-read-only ──
+    $env:PURVIEW_TENANT_TYPE    = $TenantType
+    $env:PURVIEW_CONNECTED_ORG  = if ($UseInteractive) { $connectionInfo.TenantId } else { $config.Organization }
+    Write-Host "   🔖 Session marked as: $TenantType ($env:PURVIEW_CONNECTED_ORG)" -ForegroundColor DarkCyan
     
 } catch {
     Write-Host "❌ Connection failed: $($_.Exception.Message)" -ForegroundColor Red
