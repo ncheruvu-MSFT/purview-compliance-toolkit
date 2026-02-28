@@ -38,6 +38,11 @@
         every SIT "id" field found in SitIdMap and every label GUID found in
         LabelIdMap with the corresponding target ID.
 
+    Transform 6 — Evidence storage location remapping (MappingFile.EvidenceStorageMap)
+        Replaces EvidenceStorage and IncidentReportDestination values on each
+        rule using a source→target map. Typically SharePoint site URLs or
+        storage IDs that differ between source and target tenants.
+
 .PARAMETER PoliciesFile
     Path to the DLP policies JSON export file.
 
@@ -270,7 +275,25 @@ function Invoke-IdRemap {
     $Rule.ContentContainsSensitiveInformation = $remapped
 }
 
-Write-Host "🛡️  Importing DLP policies to TARGET tenant..." -ForegroundColor Cyan
+# ── Transform 6: Evidence storage location remapping ────────────────
+# Replaces EvidenceStorage and IncidentReportDestination SharePoint URLs
+# (or storage IDs) in rules using a source→target map.
+function Invoke-EvidenceStorageRemap {
+    param([PSCustomObject]$Rule, [hashtable]$EvidenceStorageMap)
+    if (-not $EvidenceStorageMap -or $EvidenceStorageMap.Count -eq 0) { return $false }
+    $changed = $false
+    if ($Rule.EvidenceStorage -and $EvidenceStorageMap.ContainsKey($Rule.EvidenceStorage)) {
+        $Rule.EvidenceStorage = $EvidenceStorageMap[$Rule.EvidenceStorage]
+        $changed = $true
+    }
+    if ($Rule.IncidentReportDestination -and $EvidenceStorageMap.ContainsKey($Rule.IncidentReportDestination)) {
+        $Rule.IncidentReportDestination = $EvidenceStorageMap[$Rule.IncidentReportDestination]
+        $changed = $true
+    }
+    return $changed
+}
+
+
 Write-Host ""
 Write-Host "   Policies file: $PoliciesFile" -ForegroundColor Gray
 if ($RulesFile)    { Write-Host "   Rules file:    $RulesFile"    -ForegroundColor Gray }
@@ -303,6 +326,7 @@ $charMap           = @{}
 $labelIdMap        = @{}
 $sitIdMap          = @{}
 $printerGroupMap   = @{}
+$evidenceStorageMap = @{}
 $exemptionGroupId  = $null
 $dummyExclusionGroup = $null
 
@@ -336,6 +360,10 @@ if ($MappingFile) {
             $dummyExclusionGroup = $mapping.DummyExclusionGroup
             Write-Host "   🔧 T2 DummyExclusionGroup: $dummyExclusionGroup" -ForegroundColor DarkGray
         }
+        if ($mapping.EvidenceStorageMap) {
+            $mapping.EvidenceStorageMap.PSObject.Properties | ForEach-Object { $evidenceStorageMap[$_.Name] = $_.Value }
+            Write-Host "   🔧 T6 EvidenceStorageMap: $($evidenceStorageMap.Count) mapping(s)" -ForegroundColor DarkGray
+        }
     } catch {
         Write-Host "   ❌ Failed to load mapping file: $($_.Exception.Message)" -ForegroundColor Red
         exit 1
@@ -350,7 +378,8 @@ if ($MappingFile) {
 # STEP 3: Apply transforms (in-memory, before any tenant write)
 # ─────────────────────────────────────────────────────────────────────
 $anyTransform = $SanitizeNames -or $LocationsToAll -or $printerGroupMap.Count -gt 0 `
-                -or $exemptionGroupId -or $labelIdMap.Count -gt 0 -or $sitIdMap.Count -gt 0
+                -or $exemptionGroupId -or $labelIdMap.Count -gt 0 -or $sitIdMap.Count -gt 0 `
+                -or $evidenceStorageMap.Count -gt 0
 
 if ($anyTransform) {
     Write-Host "⏳ Step 3: Applying transforms..." -ForegroundColor Yellow
@@ -418,6 +447,20 @@ if ($anyTransform) {
             Invoke-IdRemap -Rule $rule -SitIdMap $sitIdMap -LabelIdMap $labelIdMap
         }
         Write-Host "   T5 🔑 SIT/Label ID remapping applied to $($sourceRules.Count) rule(s)" -ForegroundColor DarkYellow
+    }
+
+    # T6 — Evidence storage location remapping
+    if ($evidenceStorageMap.Count -gt 0) {
+        $t6Count = 0
+        foreach ($rule in $sourceRules) {
+            if (Invoke-EvidenceStorageRemap -Rule $rule -EvidenceStorageMap $evidenceStorageMap) {
+                Write-Host "   T6 🗄️  Rule '$($rule.Name)': evidence storage remapped" -ForegroundColor DarkYellow
+                $t6Count++
+            }
+        }
+        if ($t6Count -eq 0) {
+            Write-Host "   T6 🗄️  EvidenceStorageMap loaded but no matching locations found in rules" -ForegroundColor DarkGray
+        }
     }
 
     Write-Host "   ✅ Transforms complete" -ForegroundColor Green
@@ -575,7 +618,9 @@ if ($sourceRules.Count -gt 0) {
                     }
                     if ($rule.AccessScope)            { $newParams['AccessScope'] = $rule.AccessScope }
                     if ($rule.NotifyOverride)         { $newParams['NotifyOverride'] = $rule.NotifyOverride }
-                    if ($rule.NotifyAllowOverride)    { $newParams['NotifyAllowOverride'] = $rule.NotifyAllowOverride }
+                    if ($rule.NotifyAllowOverride)    { $newParams['NotifyAllowOverride'] = $rule.NotifyAllowOverride }                    if ($rule.EvidenceStorage)        { $setParams['EvidenceStorage'] = $rule.EvidenceStorage }
+                    if ($rule.IncidentReportDestination) { $setParams['IncidentReportDestination'] = $rule.IncidentReportDestination }                    if ($rule.EvidenceStorage)        { $newParams['EvidenceStorage'] = $rule.EvidenceStorage }
+                    if ($rule.IncidentReportDestination) { $newParams['IncidentReportDestination'] = $rule.IncidentReportDestination }
                     
                     New-DlpComplianceRule @newParams -ErrorAction Stop
                     Write-Host "   ✅ $ruleName → $policyName (created)" -ForegroundColor Green

@@ -182,6 +182,8 @@ if ($rules.Count -eq 0) {
             DocumentNameMatchesPatterns   = $rule.DocumentNameMatchesPatterns
             ConfidenceLevel               = $rule.ConfidenceLevel
             ActionOnError                 = $rule.ActionOnError
+            EvidenceStorage               = $rule.EvidenceStorage
+            IncidentReportDestination     = $rule.IncidentReportDestination
         }
     }
 

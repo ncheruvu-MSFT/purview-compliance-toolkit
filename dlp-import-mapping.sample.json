@@ -48,5 +48,15 @@
     "SOURCE-LABEL-GUID-1": "TARGET-LABEL-GUID-1",
     "SOURCE-LABEL-GUID-2": "TARGET-LABEL-GUID-2",
     "SOURCE-LABEL-GUID-3": "TARGET-LABEL-GUID-3"
+  },
+
+  "//18": "─── Transform 6: Evidence storage location remapping ───────────────────────────",
+  "//19": "Keys = source EvidenceStorage or IncidentReportDestination values (SharePoint site",
+  "//20": "       URLs or storage IDs), values = corresponding target tenant values.",
+  "//21": "Applied to both EvidenceStorage and IncidentReportDestination fields on each rule.",
+  "//22": "Find source values with: Get-DlpComplianceRule | Select Name,EvidenceStorage,IncidentReportDestination",
+  "EvidenceStorageMap": {
+    "https://sourcetenant.sharepoint.com/sites/DLPEvidence": "https://targettenant.sharepoint.com/sites/DLPEvidence",
+    "SOURCE-STORAGE-ID-1": "TARGET-STORAGE-ID-1"
   }
 }
