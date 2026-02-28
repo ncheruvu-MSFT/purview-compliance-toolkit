@@ -63,6 +63,11 @@ migration-log-*.log
 *~
 *.swp
 
+# Test/debug output files
+test-run-output.txt
+test-t6-*.txt
+*-output.txt
+
 # Migration log files
 migration-log-*.log
 
