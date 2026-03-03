@@ -128,6 +128,23 @@ Write-Host "✅ Migration complete!" -ForegroundColor Green
 
 ## Troubleshooting
 
+### Auto-Labeling Policy Import Fails ("audit log search" error)
+
+`New-AutoSensitivityLabelPolicy` requires Unified Audit Log to be enabled.
+`Set-AdminAuditLogConfig` is an **Exchange Online** cmdlet — it is **not** available in IPPS.
+
+```powershell
+# In a separate window — connect to Exchange Online (not IPPS)
+Connect-ExchangeOnline -UserPrincipalName admin@yourtenant.onmicrosoft.com
+Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true
+Disconnect-ExchangeOnline -Confirm:$false
+
+# Wait up to 60 minutes, then re-run:
+.\10-Import-AutoLabelPolicies.ps1 -PoliciesFile ".\exports\auto-label-policies-*.json" -RulesFile ".\exports\auto-label-rules-*.json"
+```
+
+---
+
 ### Connection Issues
 ```powershell
 # Check current connection

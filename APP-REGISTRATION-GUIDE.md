@@ -47,6 +47,59 @@ Then test the connection:
 
 If you prefer manual setup or need to understand the process, follow the [detailed manual steps](#manual-setup-steps) below.
 
+### Option 3: Managed Identity + Azure Key Vault (Recommended for Azure VMs)
+
+For scripts running **on an Azure VM, Azure Automation, or any Azure-hosted compute**, use a System-Assigned Managed Identity to pull the certificate from Key Vault. No credentials are ever stored locally.
+
+**One-time Key Vault setup:**
+
+```powershell
+# 1. Enable system-assigned managed identity on your VM
+az vm identity assign --name <vm-name> --resource-group <rg-name>
+
+# 2. Create Key Vault and upload certificate
+az keyvault create --name "kv-purview-tools" --resource-group <rg-name> --location eastus
+
+# Upload the PFX created by 00-Setup-AppRegistration.ps1
+az keyvault certificate import \
+  --vault-name "kv-purview-tools" \
+  --name "purview-source-cert" \
+  --file "mycert-source.pfx"
+
+# 3. Grant Managed Identity access (Key Vault Secrets User)
+$miPrincipalId = az vm show --name <vm-name> --resource-group <rg-name> \
+  --query identity.principalId -o tsv
+
+az role assignment create \
+  --role "Key Vault Secrets User" \
+  --assignee $miPrincipalId \
+  --scope $(az keyvault show --name kv-purview-tools --query id -o tsv)
+```
+
+**Add Key Vault details to your `app-config.json`:**
+
+```json
+{
+    "AppId": "12345678-1234-1234-1234-123456789abc",
+    "Organization": "contoso.onmicrosoft.com",
+    "KeyVaultName": "kv-purview-tools",
+    "KeyVaultCertName": "purview-source-cert"
+}
+```
+
+**Connect using the `-UseKeyVault` flag:**
+
+```powershell
+.\01-Connect-Tenant.ps1 -UseKeyVault
+# Authenticates to Azure via Managed Identity, pulls cert from KV, connects — no PFX on disk
+```
+
+Test it:
+
+```powershell
+.\00a-Test-AppConnection.ps1 -UseKeyVault
+```
+
 ---
 
 ## 📦 Prerequisites
@@ -132,13 +185,19 @@ After running the setup script, you'll have:
     "TenantId": "87654321-4321-4321-4321-cba987654321",
     "Organization": "contoso.onmicrosoft.com",
     "CertificateThumbprint": "ABC123DEF456...",
-    "CertificatePath": "C:\\Git\\AZ\\purview-sit-migration-script\\mycert.pfx",
-    "CerPath": "C:\\Git\\AZ\\purview-sit-migration-script\\mycert.cer",
+    "CertificatePath": "C:\\certs\\mycert.pfx",
+    "CerPath": "C:\\certs\\mycert.cer",
     "AssignedRole": "Compliance Administrator",
     "CreatedDate": "2026-02-03 14:30:00",
-    "ExpiryDate": "2027-02-03 14:30:00"
+    "ExpiryDate": "2027-02-03 14:30:00",
+
+    "_comment_kv": "Optional — Key Vault fields for Managed Identity auth (leave blank for local cert mode)",
+    "KeyVaultName": "",
+    "KeyVaultCertName": ""
 }
 ```
+
+> **Key Vault mode**: when `KeyVaultName` and `KeyVaultCertName` are populated and `-UseKeyVault` is passed, the scripts skip `CertificateThumbprint` / `CertificatePath` entirely. The certificate is loaded ephemerally from Key Vault — it is **never written to disk**.
 
 ---
 
@@ -232,15 +291,44 @@ Connect-IPPSSession `
     -Organization "contoso.onmicrosoft.com"
 ```
 
-### Connect with Certificate Object
+### Connect with Certificate Object (from Azure Key Vault)
+
+> **Note:** `Get-AzKeyVaultCertificate` returns metadata only — it does **not** return the private key.
+> To get a usable `X509Certificate2` with private key, retrieve the certificate from the Key Vault **secret** (which stores the full PFX as base64).
 
 ```powershell
-# For advanced scenarios (e.g., cert from Azure Key Vault)
-$cert = Get-AzKeyVaultCertificate -VaultName "vault" -Name "cert"
+# Authenticate to Azure — works on VM (Managed Identity), CI/CD (service principal), or locally (interactive)
+Connect-AzAccount -Identity -ErrorAction SilentlyContinue   # Managed Identity
+# For local dev: Connect-AzAccount
+
+# Retrieve the full PFX (base64) via the Key Vault Secret — this includes the private key
+$kvSecret   = Get-AzKeyVaultSecret `
+                  -VaultName  "kv-purview-tools" `
+                  -Name       "purview-source-cert" `
+                  -AsPlainText
+
+# Build an in-memory X509Certificate2 — EphemeralKeySet means private key NEVER touches disk
+$certBytes  = [Convert]::FromBase64String($kvSecret)
+$certObject = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+    $certBytes,
+    [string]::Empty,
+    [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
+)
+
+Write-Host "Certificate loaded: $($certObject.Subject) | Expires: $($certObject.NotAfter) | Thumbprint: $($certObject.Thumbprint)"
+
+# Connect to Security & Compliance using the in-memory certificate
 Connect-IPPSSession `
-    -Certificate $cert `
-    -AppID "12345678-1234-1234-1234-123456789abc" `
-    -Organization "contoso.onmicrosoft.com"
+    -Certificate  $certObject `
+    -AppID        "12345678-1234-1234-1234-123456789abc" `
+    -Organization "contoso.onmicrosoft.com" `
+    -ShowBanner:$false
+```
+
+Or use the built-in wrapper in `-UseKeyVault` mode:
+
+```powershell
+.\01-Connect-Tenant.ps1 -UseKeyVault
 ```
 
 ---
@@ -397,6 +485,117 @@ Update-MgApplication -ApplicationId $app.Id -KeyCredentials @($keyCredential)
 
 ---
 
+## 🖥️ Azure VM with Managed Identity — Complete Setup
+
+This section covers the end-to-end setup for running Purview toolkit scripts on an **Azure VM using Managed Identity** to authenticate to Key Vault.
+
+### Architecture
+
+```
+┌─────────────────────┐        ┌──────────────────────┐        ┌───────────────────────────┐
+│  Azure VM           │        │  Azure Key Vault      │        │  Microsoft Purview /      │
+│                     │        │                       │        │  Security & Compliance    │
+│  System-Assigned  ──┼──RBAC─▶│  purview-source-cert  │        │  PowerShell               │
+│  Managed Identity   │        │  (PFX stored as       │        │                           │
+│                     │──Gets──▶│   Secret/base64)      │──Cert─▶│  Connect-IPPSSession      │
+│  *.ps1 scripts      │        │                       │        │  -Certificate $certObj    │
+└─────────────────────┘        └──────────────────────┘        └───────────────────────────┘
+      No PFX on disk               No shared keys                   App Registration
+      No stored credentials        MI token only                    (Entra ID)
+```
+
+### Step 1 — Enable Managed Identity on the VM
+
+```powershell
+# Azure CLI
+az vm identity assign `
+    --name        "vm-purview-automation" `
+    --resource-group "rg-purview"
+
+# Capture the Principal ID (needed for RBAC assignment)
+$principalId = az vm show `
+    --name        "vm-purview-automation" `
+    --resource-group "rg-purview" `
+    --query identity.principalId -o tsv
+
+Write-Host "Managed Identity Principal ID: $principalId"
+```
+
+### Step 2 — Upload Certificate to Key Vault
+
+```powershell
+# Import the PFX generated by 00-Setup-AppRegistration.ps1
+az keyvault certificate import `
+    --vault-name  "kv-purview-tools" `
+    --name        "purview-source-cert" `
+    --file        ".\mycert-source.pfx"
+# Note: if the PFX has a password, add: --password "<pfx-password>"
+
+# Verify it was imported
+az keyvault certificate show `
+    --vault-name  "kv-purview-tools" `
+    --name        "purview-source-cert" `
+    --query "{name:name, expires:attributes.expires, thumbprint:x509ThumbprintHex}" -o table
+```
+
+### Step 3 — Grant VM Managed Identity Access to Key Vault
+
+```powershell
+# Get Key Vault resource ID
+$kvId = az keyvault show --name "kv-purview-tools" --query id -o tsv
+
+# Assign Key Vault Secrets User (read-only, least privilege)
+az role assignment create `
+    --role      "Key Vault Secrets User" `
+    --assignee  $principalId `
+    --scope     $kvId
+
+# Assign Key Vault Certificate User (to read cert metadata)
+az role assignment create `
+    --role      "Key Vault Certificate User" `
+    --assignee  $principalId `
+    --scope     $kvId
+```
+
+### Step 4 — Update `app-config.json` on the VM
+
+```json
+{
+    "AppName":         "Purview-SIT-Migration-App",
+    "AppId":           "12345678-1234-1234-1234-123456789abc",
+    "TenantId":        "87654321-4321-4321-4321-cba987654321",
+    "Organization":    "contoso.onmicrosoft.com",
+    "KeyVaultName":    "kv-purview-tools",
+    "KeyVaultCertName":"purview-source-cert"
+}
+```
+
+> The `CertificateThumbprint` and `CertificatePath` fields are **not needed** in Key Vault mode — the scripts derive the thumbprint from the loaded certificate object.
+
+### Step 5 — Connect and Test
+
+```powershell
+# On the VM — Managed Identity authenticates automatically
+.\01-Connect-Tenant.ps1 -UseKeyVault -TenantType Source
+
+# Validate
+.\00a-Test-AppConnection.ps1 -UseKeyVault
+```
+
+### Troubleshooting Key Vault Access
+
+```powershell
+# Verify Managed Identity can reach Key Vault (run on the VM)
+Connect-AzAccount -Identity
+$secret = Get-AzKeyVaultSecret -VaultName "kv-purview-tools" -Name "purview-source-cert" -AsPlainText
+if ($secret) { Write-Host "✅ Key Vault access works" } else { Write-Host "❌ Access denied — check RBAC" }
+
+# Check role assignments on the KV
+az role assignment list --scope $(az keyvault show --name kv-purview-tools --query id -o tsv) -o table
+```
+
+---
+
 ## 🏢 Enterprise Scenarios
 
 ### Multi-Tenant Migrations
@@ -508,4 +707,5 @@ For issues:
 
 ---
 
-**Last Updated:** February 2026
+**Last Updated:** March 2026  
+**Added:** Managed Identity + Azure Key Vault authentication option (Option 3) for Azure VM scenarios

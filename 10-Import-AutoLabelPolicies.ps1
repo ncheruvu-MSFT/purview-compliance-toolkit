@@ -43,6 +43,20 @@
 .NOTES
     Must be connected to the TARGET tenant's Security & Compliance PowerShell.
     Run: .\01-Connect-Tenant.ps1 -TenantType Target
+
+    PREREQUISITE — Unified Audit Log:
+    New-AutoSensitivityLabelPolicy requires Unified Audit Log to be ENABLED on
+    the target tenant. If you see "audit log search" errors, enable it first:
+
+      Connect-ExchangeOnline -UserPrincipalName admin@tenant.onmicrosoft.com
+      Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true
+      Disconnect-ExchangeOnline -Confirm:$false
+
+    IMPORTANT: Set-AdminAuditLogConfig is an Exchange Online cmdlet; it is NOT
+    available in Security & Compliance PowerShell (IPPS). You MUST use
+    Connect-ExchangeOnline (ExchangeOnlineManagement module) to run it.
+    The change may take up to 60 minutes to propagate.
+    Use -SkipAuditLogCheck to bypass the pre-flight check.
 #>
 
 [CmdletBinding(SupportsShouldProcess)]
@@ -60,7 +74,10 @@ param(
 
     [switch]$SkipExisting,
     [switch]$TestMode,
-    [switch]$Force
+    [switch]$Force,
+
+    # Skip the Unified Audit Log pre-flight check (useful if already verified or in WhatIf mode)
+    [switch]$SkipAuditLogCheck
 )
 
 # ── Connection check ──────────────────────────────────────────────────
@@ -82,6 +99,35 @@ if ($env:PURVIEW_TENANT_TYPE -eq 'Source') {
 if (-not $env:PURVIEW_TENANT_TYPE) {
     Write-Host "⚠️  Tenant type not confirmed — connect via .\01-Connect-Tenant.ps1 -TenantType Target to enable safety checks." -ForegroundColor Yellow
 }
+
+# ── Unified Audit Log pre-flight check ───────────────────────────────────────
+# New-AutoSensitivityLabelPolicy fails if Unified Audit Log is not enabled.
+# Get-AdminAuditLogConfig is available via IPPS. Set-AdminAuditLogConfig is NOT —
+# that cmdlet requires an Exchange Online connection.
+if (-not $SkipAuditLogCheck -and -not $WhatIfPreference) {
+    Write-Host "🔍 Checking Unified Audit Log status..." -ForegroundColor Yellow
+    try {
+        $auditConfig = Get-AdminAuditLogConfig -ErrorAction Stop
+        if ($auditConfig.UnifiedAuditLogIngestionEnabled -eq $false) {
+            Write-Host "`n❌ PREREQUISITE FAILED: Unified Audit Log is DISABLED on this tenant." -ForegroundColor Red
+            Write-Host "   New-AutoSensitivityLabelPolicy requires audit log ingestion to be on." -ForegroundColor Red
+            Write-Host "`n💡 Fix — run these commands in a SEPARATE PowerShell window:" -ForegroundColor Yellow
+            Write-Host "   Connect-ExchangeOnline -UserPrincipalName admin@$($env:PURVIEW_CONNECTED_ORG)" -ForegroundColor Cyan
+            Write-Host "   Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled `$true" -ForegroundColor Cyan
+            Write-Host "   Disconnect-ExchangeOnline -Confirm:`$false" -ForegroundColor Cyan
+            Write-Host "`n   ⏱️  Allow up to 60 minutes for the change to propagate, then re-run this script." -ForegroundColor Yellow
+            Write-Host "   Use -SkipAuditLogCheck to bypass this check if already done." -ForegroundColor Gray
+            exit 1
+        }
+        Write-Host "   ✅ Unified Audit Log is enabled" -ForegroundColor Green
+    } catch [System.Management.Automation.CommandNotFoundException] {
+        Write-Host "   ⚠️  Get-AdminAuditLogConfig not available in this session — skipping check." -ForegroundColor Yellow
+        Write-Host "      Verify manually that Unified Audit Log is enabled before proceeding." -ForegroundColor Yellow
+    } catch {
+        Write-Host "   ⚠️  Could not check Unified Audit Log status: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+Write-Host ""
 
 # ── Helper: safe JSON import (handles case-conflicting keys from older exports) ─
 function ConvertFrom-JsonSafe {

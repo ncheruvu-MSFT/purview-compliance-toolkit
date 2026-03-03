@@ -4,7 +4,11 @@
 
 .DESCRIPTION
     Tests the connection to Security & Compliance PowerShell using the
-    app registration and certificate created by 00-Setup-AppRegistration.ps1
+    app registration and certificate created by 00-Setup-AppRegistration.ps1.
+    Supports three auth modes:
+      - Thumbprint  (default) — cert installed in local store
+      - PfxFile               — .pfx file on disk (prompts for password)
+      - KeyVault              — Managed Identity → Azure Key Vault ephemeral cert
 
 .PARAMETER ConfigPath
     Path to the app-config.json file (default: looks in script directory)
@@ -17,6 +21,12 @@
     Use .pfx certificate file instead of thumbprint
     Requires certificate password
 
+.PARAMETER UseKeyVault
+    Retrieve the certificate from Azure Key Vault via Managed Identity.
+    Requires KeyVaultName and KeyVaultCertName fields in app-config.json.
+    On an Azure VM with Managed Identity assigned the certificate private key
+    is loaded ephemerally — it never touches disk.
+
 .EXAMPLE
     .\00a-Test-AppConnection.ps1
     
@@ -27,11 +37,18 @@
     
     Tests connection using .pfx file (prompts for password)
 
+.EXAMPLE
+    .\00a-Test-AppConnection.ps1 -UseKeyVault
+    
+    Tests connection via Managed Identity → Key Vault (ideal for Azure VMs / automation)
+
 .NOTES
     Requirements:
     - ExchangeOnlineManagement module
     - App registration created via 00-Setup-AppRegistration.ps1
     - app-config.json file with connection details
+    - For -UseKeyVault: Az.Accounts + Az.KeyVault modules; VM Managed Identity with
+      'Key Vault Secrets User' role on the vault
 #>
 
 [CmdletBinding(DefaultParameterSetName = 'Thumbprint')]
@@ -40,10 +57,13 @@ param(
     [string]$ConfigPath,
 
     [Parameter(ParameterSetName = 'Thumbprint')]
-    [switch]$UseThumbprint = $true,
+    [switch]$UseThumbprint,
 
     [Parameter(ParameterSetName = 'PfxFile')]
-    [switch]$UsePfxFile
+    [switch]$UsePfxFile,
+
+    [Parameter(ParameterSetName = 'KeyVault')]
+    [switch]$UseKeyVault
 )
 
 $ErrorActionPreference = "Stop"
@@ -104,6 +124,70 @@ if ($existingSession) {
 }
 #endregion
 
+#region Key Vault Helper
+function Get-CertFromKeyVault {
+    <#
+    .SYNOPSIS  Retrieve a PFX certificate from Azure Key Vault and return it as
+               an in-memory X509Certificate2 (EphemeralKeySet — never touches disk).
+    #>
+    param(
+        [Parameter(Mandatory)][string]$VaultName,
+        [Parameter(Mandatory)][string]$CertName
+    )
+
+    Write-Host "   📦 Ensuring Az.Accounts / Az.KeyVault modules..." -ForegroundColor Gray
+    foreach ($mod in @('Az.Accounts','Az.KeyVault')) {
+        if (-not (Get-Module $mod -ListAvailable)) {
+            Install-Module $mod -Scope CurrentUser -Force -AllowClobber
+        }
+        Import-Module $mod -ErrorAction Stop
+    }
+
+    # Try Managed Identity first (works on Azure VMs / automation); fall back to interactive
+    $azCtx = Get-AzContext -ErrorAction SilentlyContinue
+    if (-not $azCtx) {
+        Write-Host "   🔑 Authenticating to Azure..." -ForegroundColor Gray
+        try {
+            Connect-AzAccount -Identity -ErrorAction Stop | Out-Null
+            Write-Host "      ✅ Managed Identity login succeeded" -ForegroundColor Green
+        } catch {
+            Write-Host "      ⚠️  Managed Identity unavailable — falling back to interactive" -ForegroundColor Yellow
+            Connect-AzAccount -ErrorAction Stop | Out-Null
+        }
+    }
+
+    Write-Host "   🔓 Retrieving secret '$CertName' from Key Vault '$VaultName'..." -ForegroundColor Gray
+    try {
+        $kvSecret = Get-AzKeyVaultSecret `
+            -VaultName  $VaultName `
+            -Name       $CertName `
+            -AsPlainText `
+            -ErrorAction Stop
+    } catch {
+        throw "Failed to retrieve '$CertName' from Key Vault '$VaultName': $($_.Exception.Message)`n" +
+              "  Ensure the Managed Identity has 'Key Vault Secrets User' role on the vault."
+    }
+
+    $certBytes  = [Convert]::FromBase64String($kvSecret)
+    $certObject = [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+        $certBytes,
+        [string]::Empty,
+        [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::EphemeralKeySet
+    )
+
+    Write-Host "   ✅ Certificate loaded: $($certObject.Subject)" -ForegroundColor Green
+    Write-Host "      Thumbprint : $($certObject.Thumbprint)" -ForegroundColor Gray
+    Write-Host "      Expires    : $($certObject.NotAfter.ToString('yyyy-MM-dd'))" -ForegroundColor Gray
+
+    $daysLeft = ($certObject.NotAfter - (Get-Date)).Days
+    if ($daysLeft -lt 30) {
+        Write-Warning "Certificate expires in $daysLeft day(s)! Rotate before: $($certObject.NotAfter.ToString('yyyy-MM-dd'))"
+    }
+
+    return $certObject
+}
+#endregion
+
 #region Connect with Certificate
 Write-Host "🔗 Connecting to Security & Compliance PowerShell..." -ForegroundColor Cyan
 
@@ -124,6 +208,23 @@ try {
             -CertificateFilePath $config.CertificatePath `
             -CertificatePassword $certPassword `
             -AppID $config.AppId `
+            -Organization $config.Organization `
+            -ShowBanner:$false
+    } elseif ($UseKeyVault) {
+        # Connect using ephemeral cert from Azure Key Vault (Managed Identity)
+        if (-not $config.KeyVaultName -or -not $config.KeyVaultCertName) {
+            Write-Host "   ❌ app-config.json is missing 'KeyVaultName' and/or 'KeyVaultCertName'" -ForegroundColor Red
+            Write-Host "      Add these fields and retry with -UseKeyVault" -ForegroundColor Yellow
+            exit 1
+        }
+        Write-Host "   Key Vault : $($config.KeyVaultName)" -ForegroundColor Gray
+        Write-Host "   Cert name : $($config.KeyVaultCertName)" -ForegroundColor Gray
+
+        $kvCert = Get-CertFromKeyVault -VaultName $config.KeyVaultName -CertName $config.KeyVaultCertName
+
+        Connect-IPPSSession `
+            -Certificate  $kvCert `
+            -AppID        $config.AppId `
             -Organization $config.Organization `
             -ShowBanner:$false
     } else {
@@ -148,6 +249,10 @@ try {
     Write-Host "   2. Verify the certificate is still valid" -ForegroundColor White
     Write-Host "   3. Check that the organization domain is correct (use .onmicrosoft.com)" -ForegroundColor White
     Write-Host "   4. Wait a few minutes after app registration for permissions to propagate" -ForegroundColor White
+    if ($UseKeyVault) {
+        Write-Host "   5. Verify Managed Identity has 'Key Vault Secrets User' on '$($config.KeyVaultName)'" -ForegroundColor White
+        Write-Host "   6. Confirm the cert is stored as a Secret (PFX/base64) not just a Certificate object" -ForegroundColor White
+    }
     exit 1
 }
 #endregion

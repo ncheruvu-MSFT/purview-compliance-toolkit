@@ -8,5 +8,9 @@
   "AppId": "<YOUR-APP-ID-GUID>",
   "ExpiryDate": "2027-01-01 00:00:00",
   "TenantId": "<YOUR-TENANT-ID-GUID>",
-  "CreatedDate": "2026-01-01 00:00:00"
+  "CreatedDate": "2026-01-01 00:00:00",
+
+  "_comment_kv": "Optional — required only when using -UseKeyVault mode (Managed Identity on Azure VM)",
+  "KeyVaultName": "",
+  "KeyVaultCertName": ""
 }

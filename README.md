@@ -143,6 +143,27 @@ You may need to allow script execution:
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
+### 5. Unified Audit Log (required for Auto-Labeling Policies only)
+
+> ⚠️ **Applies only when importing auto-labeling policies** (`10-Import-AutoLabelPolicies.ps1`).
+> `New-AutoSensitivityLabelPolicy` will fail with an error if Unified Audit Log ingestion is disabled.
+
+```powershell
+# Connect to Exchange Online (NOT Security & Compliance PowerShell)
+Connect-ExchangeOnline -UserPrincipalName admin@yourtenant.onmicrosoft.com
+
+# Enable Unified Audit Log ingestion
+Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true
+
+# Disconnect
+Disconnect-ExchangeOnline -Confirm:$false
+```
+
+> ℹ️ `Set-AdminAuditLogConfig` is an **Exchange Online cmdlet** and is **not available** in
+> Security & Compliance PowerShell (IPPS). The change may take up to 60 minutes to propagate.
+> The import script (`10-Import-AutoLabelPolicies.ps1`) will check this automatically and
+> output clear remediation steps if the audit log is disabled.
+
 ---
 
 ## 🚀 Migration Workflow

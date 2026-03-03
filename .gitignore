@@ -41,8 +41,11 @@ dlp-import-mapping.json
 exports/*.xml
 exports/*.json
 exports/*.txt
-exports/archive/*.xml
 exports/**/*.xml
+exports/**/*.json
+exports/**/*.txt
+exports/backup-*/
+exports/archive/*.xml
 
 # Keep directory structure
 !exports/.gitkeep

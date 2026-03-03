@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-03-01T00:00:00.000Z" agent="GitHub Copilot" version="21.0.0" type="device">
+  <diagram name="Purview Compliance Toolkit" id="purview-toolkit-arch">
+    <mxGraphModel dx="1422" dy="762" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1200" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ═══════════════════════════════ TITLE BANNER ═══════════════════════════════ -->
+        <mxCell id="title-bg" value="" style="rounded=1;arcSize=3;fillColor=#0078D4;strokeColor=none;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="1640" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="title-icon" value="🛡️" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=36;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="80" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="title-text" value="&lt;b&gt;&lt;font style=&quot;font-size:24px;&quot; color=&quot;#FFFFFF&quot;&gt;Microsoft Purview Compliance Toolkit&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px;&quot; color=&quot;#BDDEFF&quot;&gt;Community / Field IP  ·  PowerShell Automation  ·  Backup · Restore · Migrate M365 Compliance Configurations Across Tenants&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="100" y="20" width="1460" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="title-gh" value="&lt;font style=&quot;font-size:10px;&quot; color=&quot;#BDDEFF&quot;&gt;github.com/ncheruvu-MSFT/purview-compliance-toolkit&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=right;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="1400" y="20" width="245" height="75" as="geometry" />
+        </mxCell>
+
+        <!-- ═══════════════════════════════ DISCLAIMER ═══════════════════════════════ -->
+        <mxCell id="disclaimer" value="&lt;font style=&quot;font-size:10px;&quot; color=&quot;#B71C1C&quot;&gt;⚠️  Community / Field-authored project · NOT a Microsoft-supported product · Single-tenant backup, restore &amp;amp; migration only · Does NOT provide Multi-Tenant Organization (MTO) capabilities&lt;/font&gt;" style="text;html=1;strokeColor=#C62828;fillColor=#FFEBEE;align=center;verticalAlign=middle;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="105" width="1640" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ SOURCE TENANT ═════════════════ -->
+        <mxCell id="src-box" value="&lt;b&gt;&lt;font style=&quot;font-size:14px;&quot; color=&quot;#0D47A1&quot;&gt;🏢  Source M365 Tenant&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot; color=&quot;#616161&quot;&gt;e.g. contoso.onmicrosoft.com&lt;/font&gt;" style="swimlane;startSize=52;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="155" width="460" height="395" as="geometry" />
+        </mxCell>
+        <mxCell id="src-purview" value="&lt;b&gt;Microsoft Purview&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Compliance Portal&lt;/font&gt;" style="rounded=1;fillColor=#5C2D91;strokeColor=#4A1F7A;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="src-box">
+          <mxGeometry x="130" y="70" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="src-entra" value="&lt;b&gt;Microsoft Entra ID&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;App Registration&lt;br&gt;+ Certificate Auth&lt;/font&gt;" style="rounded=1;fillColor=#106EBE;strokeColor=#0F5A9E;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="src-box">
+          <mxGeometry x="30" y="148" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="src-ipps" value="&lt;b&gt;Security &amp;amp; Compliance&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;PowerShell&lt;br&gt;IPPS Session&lt;/font&gt;" style="rounded=1;fillColor=#106EBE;strokeColor=#0F5A9E;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="src-box">
+          <mxGeometry x="260" y="148" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="src-sits" value="Custom SITs  (Sensitive Information Types)" style="rounded=1;fillColor=#BBDEFB;strokeColor=#1E88E5;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="src-box">
+          <mxGeometry x="30" y="245" width="400" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="src-labels" value="Sensitivity Labels  &amp;amp;  Label Policies" style="rounded=1;fillColor=#BBDEFB;strokeColor=#1E88E5;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="src-box">
+          <mxGeometry x="30" y="280" width="400" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="src-dlp" value="DLP Compliance Policies  &amp;amp;  Rules" style="rounded=1;fillColor=#BBDEFB;strokeColor=#1E88E5;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="src-box">
+          <mxGeometry x="30" y="315" width="400" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="src-auto" value="Auto-Labeling Policies  &amp;amp;  Rules" style="rounded=1;fillColor=#BBDEFB;strokeColor=#1E88E5;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="src-box">
+          <mxGeometry x="30" y="350" width="400" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ AUTOMATION ENGINE ═════════════════ -->
+        <mxCell id="eng-box" value="&lt;b&gt;&lt;font style=&quot;font-size:14px;&quot; color=&quot;#1B5E20&quot;&gt;⚙️  PowerShell Automation Engine&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot; color=&quot;#616161&quot;&gt;Admin Workstation  ·  GitHub Actions  ·  Azure DevOps&lt;/font&gt;" style="swimlane;startSize=52;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="520" y="155" width="640" height="395" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-orch" value="&lt;b&gt;🎯  Orchestrators&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Backup-PurviewConfig.ps1&lt;br&gt;Restore-PurviewConfig.ps1&lt;/font&gt;" style="rounded=1;fillColor=#1B5E20;strokeColor=#145214;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="205" y="65" width="230" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-s1" value="&lt;b&gt;Custom SITs&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;03-Export-Custom-SITs&lt;br&gt;04-Import-Custom-SITs&lt;/font&gt;" style="rounded=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="eng-box">
+          <mxGeometry x="25" y="150" width="140" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-s2" value="&lt;b&gt;Sensitivity Labels&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;05-Export-SensitivityLabels&lt;br&gt;06-Import-SensitivityLabels&lt;/font&gt;" style="rounded=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="eng-box">
+          <mxGeometry x="175" y="150" width="140" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-s3" value="&lt;b&gt;DLP Policies&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;07-Export-DlpPolicies&lt;br&gt;08-Import-DlpPolicies&lt;/font&gt;" style="rounded=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="eng-box">
+          <mxGeometry x="325" y="150" width="140" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-s4" value="&lt;b&gt;Auto-Label Policies&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;09-Export-AutoLabel&lt;br&gt;10-Import-AutoLabel&lt;/font&gt;" style="rounded=1;fillColor=#F3E5F5;strokeColor=#7B1FA2;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="eng-box">
+          <mxGeometry x="475" y="150" width="140" height="68" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-guid" value="&lt;font style=&quot;font-size:10px;&quot;&gt;🔄  GUID Remapping&lt;br&gt;(IDs rewritten on import)&lt;/font&gt;" style="rounded=1;arcSize=50;fillColor=#DCEDC8;strokeColor=#558B2F;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="25" y="240" width="140" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-files" value="&lt;b&gt;📁  Local Export Store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;JSON / XML · exports/ folder&lt;br&gt;Protected by .gitignore&lt;/font&gt;" style="rounded=1;fillColor=#FFF9C4;strokeColor=#F9A825;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="175" y="240" width="290" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-test" value="&lt;font style=&quot;font-size:10px;&quot;&gt;🧪  -TestMode flag&lt;br&gt;(DLP &amp;amp; AutoLabel)&lt;/font&gt;" style="rounded=1;arcSize=50;fillColor=#DCEDC8;strokeColor=#558B2F;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="475" y="240" width="140" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-cert" value="&lt;b&gt;🔐  Certificate Store&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Cert:\CurrentUser\My&lt;/font&gt;" style="rounded=1;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#B71C1C;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="25" y="315" width="140" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-conn" value="&lt;b&gt;01-Connect-Tenant.ps1&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Interactive Auth  ·  App-Only (Certificate)&lt;/font&gt;" style="rounded=1;fillColor=#0F6CBD;strokeColor=#0D5AA3;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="175" y="315" width="290" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="eng-config" value="&lt;b&gt;app-config.json&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;AppID · TenantID · Thumbprint&lt;/font&gt;" style="rounded=1;fillColor=#FFEBEE;strokeColor=#C62828;fontColor=#B71C1C;align=center;verticalAlign=middle;" vertex="1" parent="eng-box">
+          <mxGeometry x="475" y="315" width="140" height="55" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ TARGET TENANT ═════════════════ -->
+        <mxCell id="tgt-box" value="&lt;b&gt;&lt;font style=&quot;font-size:14px;&quot; color=&quot;#1A237E&quot;&gt;🏢  Target M365 Tenant&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot; color=&quot;#616161&quot;&gt;e.g. fabrikam.onmicrosoft.com&lt;/font&gt;" style="swimlane;startSize=52;fillColor=#E8EAF6;strokeColor=#283593;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="155" width="460" height="395" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-purview" value="&lt;b&gt;Microsoft Purview&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Compliance Portal&lt;/font&gt;" style="rounded=1;fillColor=#5C2D91;strokeColor=#4A1F7A;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="tgt-box">
+          <mxGeometry x="130" y="70" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-entra" value="&lt;b&gt;Microsoft Entra ID&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;App Registration&lt;br&gt;+ Certificate Auth&lt;/font&gt;" style="rounded=1;fillColor=#106EBE;strokeColor=#0F5A9E;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="tgt-box">
+          <mxGeometry x="30" y="148" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-ipps" value="&lt;b&gt;Security &amp;amp; Compliance&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;PowerShell&lt;br&gt;IPPS Session&lt;/font&gt;" style="rounded=1;fillColor=#106EBE;strokeColor=#0F5A9E;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="tgt-box">
+          <mxGeometry x="260" y="148" width="170" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-sits" value="Custom SITs  (Created / Updated)" style="rounded=1;fillColor=#C5CAE9;strokeColor=#3949AB;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="tgt-box">
+          <mxGeometry x="30" y="245" width="400" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-labels" value="Sensitivity Labels  &amp;amp;  Label Policies" style="rounded=1;fillColor=#C5CAE9;strokeColor=#3949AB;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="tgt-box">
+          <mxGeometry x="30" y="280" width="400" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-dlp" value="DLP Compliance Policies  &amp;amp;  Rules" style="rounded=1;fillColor=#C5CAE9;strokeColor=#3949AB;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="tgt-box">
+          <mxGeometry x="30" y="315" width="400" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="tgt-auto" value="Auto-Labeling Policies  &amp;amp;  Rules" style="rounded=1;fillColor=#C5CAE9;strokeColor=#3949AB;align=left;fontSize=11;spacingLeft=8;" vertex="1" parent="tgt-box">
+          <mxGeometry x="30" y="350" width="400" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ MAIN FLOW ARROWS ═════════════════ -->
+        <mxCell id="arr-export" value="&lt;b&gt;① Export&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;Get-DlpSensitiveInformationType&lt;br&gt;Get-Label · Get-DlpPolicy&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#2E7D32;strokeWidth=4;fillColor=#2E7D32;fontStyle=1;labelBackgroundColor=#E8F5E9;endArrow=block;endFill=1;" edge="1" source="src-box" target="eng-box" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-import" value="&lt;b&gt;② Import&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:9px;&quot;&gt;New-DlpSITRulePack&lt;br&gt;New-Label · New-DlpPolicy&lt;/font&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#1565C0;strokeWidth=4;fillColor=#1565C0;fontStyle=1;labelBackgroundColor=#E3F2FD;endArrow=block;endFill=1;" edge="1" source="eng-box" target="tgt-box" parent="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ AUTHENTICATION BOX ═════════════════ -->
+        <mxCell id="auth-box" value="&lt;b&gt;&lt;font style=&quot;font-size:12px;&quot;&gt;🔐  Authentication Options&lt;/font&gt;&lt;/b&gt;" style="swimlane;startSize=32;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="570" width="460" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-interactive" value="&lt;b&gt;Interactive Login&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;✅  Easy — no prerequisites&lt;br&gt;❌  Manual MFA each time&lt;br&gt;▶  Quick start / ad hoc use&lt;/font&gt;" style="rounded=1;fillColor=#FFE0B2;strokeColor=#EF6C00;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="auth-box">
+          <mxGeometry x="15" y="42" width="210" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="auth-apponly" value="&lt;b&gt;App-Only Authentication&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;✅  Fully automated&lt;br&gt;✅  Certificate-based (secure)&lt;br&gt;✅  CI/CD &amp;amp; scheduling&lt;br&gt;▶  00-Setup-AppRegistration.ps1&lt;/font&gt;" style="rounded=1;fillColor=#E65100;strokeColor=#BF360C;fontColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=11;" vertex="1" parent="auth-box">
+          <mxGeometry x="235" y="42" width="210" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ USE CASES BOX ═════════════════ -->
+        <mxCell id="uc-box" value="&lt;b&gt;&lt;font style=&quot;font-size:12px;&quot;&gt;📋  Use Cases  &amp;amp;  Scenarios&lt;/font&gt;&lt;/b&gt;" style="swimlane;startSize=32;fillColor=#F3E5F5;strokeColor=#6A1B9A;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="500" y="570" width="680" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="uc1" value="🔄  Tenant-to-Tenant Migration" style="rounded=1;fillColor=#E1BEE7;strokeColor=#8E24AA;align=center;fontSize=11;" vertex="1" parent="uc-box">
+          <mxGeometry x="15" y="48" width="210" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="uc2" value="💾  Periodic Config Backup" style="rounded=1;fillColor=#E1BEE7;strokeColor=#8E24AA;align=center;fontSize=11;" vertex="1" parent="uc-box">
+          <mxGeometry x="235" y="48" width="210" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="uc3" value="♻️  Disaster Recovery / Restore" style="rounded=1;fillColor=#E1BEE7;strokeColor=#8E24AA;align=center;fontSize=11;" vertex="1" parent="uc-box">
+          <mxGeometry x="455" y="48" width="210" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="uc4" value="🌐  M&amp;amp;A / Tenant Consolidation" style="rounded=1;fillColor=#CE93D8;strokeColor=#7B1FA2;align=center;fontSize=11;" vertex="1" parent="uc-box">
+          <mxGeometry x="15" y="100" width="210" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="uc5" value="🏭  Dev/Test → Prod Promotion" style="rounded=1;fillColor=#CE93D8;strokeColor=#7B1FA2;align=center;fontSize=11;" vertex="1" parent="uc-box">
+          <mxGeometry x="235" y="100" width="210" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="uc6" value="📋  Compliance Config as Code" style="rounded=1;fillColor=#CE93D8;strokeColor=#7B1FA2;align=center;fontSize=11;" vertex="1" parent="uc-box">
+          <mxGeometry x="455" y="100" width="210" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ OPTIONAL AZURE INFRASTRUCTURE ═════════════════ -->
+        <mxCell id="azure-box" value="&lt;b&gt;&lt;font style=&quot;font-size:12px;&quot;&gt;☁️  Optional: Azure Infrastructure&lt;/font&gt;&lt;/b&gt;" style="swimlane;startSize=32;fillColor=#E1F5FE;strokeColor=#0277BD;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="570" width="460" height="165" as="geometry" />
+        </mxCell>
+        <mxCell id="az-kv" value="&lt;b&gt;Azure Key Vault&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Secure certificate storage&lt;/font&gt;" style="rounded=1;fillColor=#0277BD;strokeColor=#01579B;fontColor=#FFFFFF;align=center;fontSize=11;" vertex="1" parent="azure-box">
+          <mxGeometry x="15" y="48" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="az-auto" value="&lt;b&gt;Azure Automation&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Scheduled backup jobs&lt;/font&gt;" style="rounded=1;fillColor=#0277BD;strokeColor=#01579B;fontColor=#FFFFFF;align=center;fontSize=11;" vertex="1" parent="azure-box">
+          <mxGeometry x="165" y="48" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="az-log" value="&lt;b&gt;Log Analytics&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;Monitoring &amp;amp; audit logs&lt;/font&gt;" style="rounded=1;fillColor=#0277BD;strokeColor=#01579B;fontColor=#FFFFFF;align=center;fontSize=11;" vertex="1" parent="azure-box">
+          <mxGeometry x="315" y="48" width="130" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="az-note" value="&lt;font style=&quot;font-size:10px;&quot; color=&quot;#01579B&quot;&gt;All Azure components are optional — toolkit runs on any PowerShell workstation without Azure infrastructure&lt;/font&gt;" style="text;html=1;strokeColor=#B3E5FC;fillColor=#B3E5FC;rounded=1;align=center;verticalAlign=middle;" vertex="1" parent="azure-box">
+          <mxGeometry x="15" y="112" width="430" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ CI/CD PIPELINES ═════════════════ -->
+        <mxCell id="cicd-box" value="&lt;b&gt;&lt;font style=&quot;font-size:12px;&quot;&gt;🔁  CI/CD Pipelines — Included Out of the Box&lt;/font&gt;&lt;/b&gt;" style="swimlane;startSize=32;fillColor=#E8F5E9;strokeColor=#1B5E20;strokeWidth=2;rounded=1;arcSize=3;" vertex="1" parent="1">
+          <mxGeometry x="20" y="755" width="1640" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd-gh-label" value="&lt;b&gt;&lt;font style=&quot;font-size:10px;&quot; color=&quot;#FFFFFF&quot;&gt;GitHub Actions&lt;/font&gt;&lt;/b&gt;" style="rounded=1;fillColor=#24292E;strokeColor=#1B2025;fontColor=#FFFFFF;align=center;" vertex="1" parent="cicd-box">
+          <mxGeometry x="148" y="38" width="140" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd1" value="&lt;font style=&quot;font-size:10px;&quot;&gt;purview-backup.yml&lt;br&gt;Scheduled weekly backup&lt;/font&gt;" style="rounded=1;fillColor=#F6F8FA;strokeColor=#24292E;align=center;fontSize=11;" vertex="1" parent="cicd-box">
+          <mxGeometry x="20" y="65" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd2" value="&lt;font style=&quot;font-size:10px;&quot;&gt;purview-migration.yml&lt;br&gt;On-demand tenant migration&lt;/font&gt;" style="rounded=1;fillColor=#F6F8FA;strokeColor=#24292E;align=center;fontSize=11;" vertex="1" parent="cicd-box">
+          <mxGeometry x="230" y="65" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd-divider" value="" style="rounded=1;fillColor=#BDBDBD;strokeColor=none;" vertex="1" parent="cicd-box">
+          <mxGeometry x="448" y="38" width="4" height="77" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd-ado-label" value="&lt;b&gt;&lt;font style=&quot;font-size:10px;&quot; color=&quot;#FFFFFF&quot;&gt;Azure DevOps Pipelines&lt;/font&gt;&lt;/b&gt;" style="rounded=1;fillColor=#0066B8;strokeColor=#005099;fontColor=#FFFFFF;align=center;" vertex="1" parent="cicd-box">
+          <mxGeometry x="596" y="38" width="170" height="22" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd3" value="&lt;font style=&quot;font-size:10px;&quot;&gt;purview-backup.yml&lt;br&gt;Scheduled backup pipeline&lt;/font&gt;" style="rounded=1;fillColor=#E3F2FD;strokeColor=#0066B8;align=center;fontSize=11;" vertex="1" parent="cicd-box">
+          <mxGeometry x="460" y="65" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd4" value="&lt;font style=&quot;font-size:10px;&quot;&gt;purview-migration.yml&lt;br&gt;Two-stage migration pipeline&lt;/font&gt;" style="rounded=1;fillColor=#E3F2FD;strokeColor=#0066B8;align=center;fontSize=11;" vertex="1" parent="cicd-box">
+          <mxGeometry x="670" y="65" width="200" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cicd-prereqs" value="&lt;b&gt;Prerequisites:&lt;/b&gt;&lt;font style=&quot;font-size:10px;&quot;&gt;  ExchangeOnlineManagement module  ·  PowerShell 5.1+  ·  Compliance Administrator role (Source &amp;amp; Target)&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;" vertex="1" parent="cicd-box">
+          <mxGeometry x="900" y="42" width="720" height="73" as="geometry" />
+        </mxCell>
+
+        <!-- ═════════════════ FOOTER ═════════════════ -->
+        <mxCell id="footer" value="&lt;font style=&quot;font-size:10px;&quot; color=&quot;#455A64&quot;&gt;🔗  github.com/ncheruvu-MSFT/purview-compliance-toolkit  ·  Community / Field IP  ·  Not Microsoft-supported  ·  PowerShell  +  ExchangeOnlineManagement module  ·  March 2026&lt;/font&gt;" style="text;html=1;strokeColor=#B0BEC5;fillColor=#ECEFF1;align=center;verticalAlign=middle;rounded=1;" vertex="1" parent="1">
+          <mxGeometry x="20" y="900" width="1640" height="35" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
