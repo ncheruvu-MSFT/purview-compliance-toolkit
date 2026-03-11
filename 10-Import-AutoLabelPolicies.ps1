@@ -72,6 +72,18 @@ param(
     [Parameter(Mandatory = $false)]
     [hashtable]$LabelGuidMap = @{},
 
+    [Parameter(Mandatory = $false)]
+    [hashtable]$SitGuidMap = @{},
+
+    # Automatically build SIT GUID map by matching SIT names on the target tenant
+    [switch]$AutoBuildSitMap,
+
+    # Path to a label-guid-map.json file (output by 06-Import-SensitivityLabels.ps1)
+    # to automatically populate LabelGuidMap
+    [Parameter(Mandatory = $false)]
+    [ValidateScript({ Test-Path $_ })]
+    [string]$LabelGuidMapFile,
+
     [switch]$SkipExisting,
     [switch]$TestMode,
     [switch]$Force,
@@ -154,6 +166,87 @@ function Get-LocationNames {
     } | Where-Object { $_ -ne $null })
 }
 
+# ── Helper: remap SIT GUIDs in ContentContainsSensitiveInformation ────
+# Follows the pattern of Invoke-IdRemap in 08-Import-DlpPolicies.ps1
+function Invoke-SitIdRemap {
+    param(
+        [array]$SitReferences,
+        [hashtable]$SitMap
+    )
+    if (-not $SitReferences -or -not $SitMap -or $SitMap.Count -eq 0) { return $SitReferences }
+    $remapped = @()
+    foreach ($item in $SitReferences) {
+        # Convert PSCustomObject to hashtable for mutation
+        $ht = @{}
+        $item.PSObject.Properties | ForEach-Object { $ht[$_.Name] = $_.Value }
+
+        # Remap SIT id field
+        if ($ht.ContainsKey('id') -and $SitMap.ContainsKey($ht['id'])) {
+            $ht['id'] = $SitMap[$ht['id']]
+        }
+        $remapped += $ht
+    }
+    return $remapped
+}
+
+# ── Helper: auto-build SIT GUID map from rule data ───────────────────
+function Build-SitGuidMap {
+    param([array]$Rules)
+    $map = @{}
+    # Collect all unique SIT references from rules
+    foreach ($rule in $Rules) {
+        if ($rule.ContentContainsSensitiveInformation) {
+            foreach ($sit in $rule.ContentContainsSensitiveInformation) {
+                $sitName = $sit.name
+                $sourceId = $sit.id
+                if (-not $sitName -or -not $sourceId) { continue }
+                if ($map.ContainsKey($sourceId)) { continue }
+
+                try {
+                    $targetSit = Get-DlpSensitiveInformationType -Identity $sitName -ErrorAction Stop
+                    $targetId = if ($targetSit -is [array]) { $targetSit[0].Id } else { $targetSit.Id }
+                    if ($sourceId -ne $targetId) {
+                        $map[$sourceId] = $targetId
+                        Write-Host "   🔗 SIT map: '$sitName' $sourceId -> $targetId" -ForegroundColor DarkGray
+                    }
+                } catch {
+                    Write-Host "   ⚠️  SIT '$sitName' (ID: $sourceId) not found on target" -ForegroundColor Yellow
+                }
+            }
+        }
+        if ($rule.ExceptIfContentContainsSensitiveInformation) {
+            foreach ($sit in $rule.ExceptIfContentContainsSensitiveInformation) {
+                $sitName = $sit.name
+                $sourceId = $sit.id
+                if (-not $sitName -or -not $sourceId) { continue }
+                if ($map.ContainsKey($sourceId)) { continue }
+
+                try {
+                    $targetSit = Get-DlpSensitiveInformationType -Identity $sitName -ErrorAction Stop
+                    $targetId = if ($targetSit -is [array]) { $targetSit[0].Id } else { $targetSit.Id }
+                    if ($sourceId -ne $targetId) {
+                        $map[$sourceId] = $targetId
+                        Write-Host "   🔗 SIT map: '$sitName' $sourceId -> $targetId" -ForegroundColor DarkGray
+                    }
+                } catch {
+                    Write-Host "   ⚠️  SIT '$sitName' (ID: $sourceId) not found on target" -ForegroundColor Yellow
+                }
+            }
+        }
+    }
+    return $map
+}
+
+# ── Load label GUID map file if provided ─────────────────────────────
+if ($LabelGuidMapFile) {
+    Write-Host "📄 Loading label GUID map: $LabelGuidMapFile" -ForegroundColor Gray
+    $mapData = Get-Content $LabelGuidMapFile -Raw | ConvertFrom-Json
+    $mapData.PSObject.Properties | ForEach-Object {
+        if (-not $LabelGuidMap.ContainsKey($_.Name)) { $LabelGuidMap[$_.Name] = $_.Value }
+    }
+    Write-Host "   Loaded $($LabelGuidMap.Count) label mapping(s)" -ForegroundColor Gray
+}
+
 Write-Host "🏷️  Importing auto-labeling policies to TARGET tenant..." -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Policies file: $PoliciesFile" -ForegroundColor Gray
@@ -175,6 +268,18 @@ if ($RulesFile) {
     Write-Host "   📋 Found $($sourceRules.Count) rule(s) in export file" -ForegroundColor Gray
 }
 Write-Host ""
+
+# ── Auto-build SIT GUID map if requested ─────────────────────────────
+if ($AutoBuildSitMap -and $sourceRules.Count -gt 0) {
+    Write-Host "⏳ Building SIT GUID map from rule data..." -ForegroundColor Yellow
+    $autoSitMap = Build-SitGuidMap -Rules $sourceRules
+    # Merge auto-built map with any explicit mappings (explicit takes priority)
+    foreach ($key in $autoSitMap.Keys) {
+        if (-not $SitGuidMap.ContainsKey($key)) { $SitGuidMap[$key] = $autoSitMap[$key] }
+    }
+    Write-Host "   Built $($SitGuidMap.Count) total SIT mapping(s)" -ForegroundColor Gray
+    Write-Host ""
+}
 
 # ─────────────────────────────────────────────────────────────────────
 # STEP 2: Import auto-labeling policies
@@ -298,12 +403,13 @@ if ($sourceRules.Count -gt 0) {
                     if ($null -ne $rule.Disabled)  { $setParams['Disabled'] = $rule.Disabled }
                     if ($rule.Comment)             { $setParams['Comment'] = $rule.Comment }
                     if ($rule.ContentContainsSensitiveInformation) {
-                        $setParams['ContentContainsSensitiveInformation'] = $rule.ContentContainsSensitiveInformation
+                        $remappedSits = Invoke-SitIdRemap -SitReferences $rule.ContentContainsSensitiveInformation -SitMap $SitGuidMap
+                        $setParams['ContentContainsSensitiveInformation'] = $remappedSits
                     }
                     if ($rule.HeaderMatchesPatterns)       { $setParams['HeaderMatchesPatterns'] = $rule.HeaderMatchesPatterns }
                     if ($rule.SubjectMatchesPatterns)      { $setParams['SubjectMatchesPatterns'] = $rule.SubjectMatchesPatterns }
                     if ($rule.DocumentNameMatchesPatterns) { $setParams['DocumentNameMatchesPatterns'] = $rule.DocumentNameMatchesPatterns }
-                    
+
                     Set-AutoSensitivityLabelRule @setParams -ErrorAction Stop
                     Write-Host "   🔄 $ruleName (updated)" -ForegroundColor Cyan
                     $rUpdated++
@@ -321,7 +427,8 @@ if ($sourceRules.Count -gt 0) {
                     if ($rule.Comment)             { $newParams['Comment'] = $rule.Comment }
                     if ($rule.Workload)            { $newParams['Workload'] = $rule.Workload }
                     if ($rule.ContentContainsSensitiveInformation) {
-                        $newParams['ContentContainsSensitiveInformation'] = $rule.ContentContainsSensitiveInformation
+                        $remappedSits = Invoke-SitIdRemap -SitReferences $rule.ContentContainsSensitiveInformation -SitMap $SitGuidMap
+                        $newParams['ContentContainsSensitiveInformation'] = $remappedSits
                     }
                     if ($rule.ContentPropertyContainsWords) {
                         $newParams['ContentPropertyContainsWords'] = $rule.ContentPropertyContainsWords
