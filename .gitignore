@@ -21,10 +21,14 @@ target-app-config.json
 # DLP import mapping (contains target tenant GUIDs — never commit)
 dlp-import-mapping.json
 
+# Label import mapping (contains target tenant GUIDs/addresses — never commit)
+label-import-mapping.json
+
 # Allow sample/template config (safe - contains only placeholders)
 !app-config.sample.json
 !*-config.sample.json
 !dlp-import-mapping.sample.json
+!label-import-mapping.sample.json
 
 # Credentials and Secrets
 *credentials*
@@ -70,6 +74,11 @@ migration-log-*.log
 test-run-output.txt
 test-t6-*.txt
 *-output.txt
+
+# Local test/debug scripts (development only)
+Test-LabelImportFix.ps1
+Test-SubLabelFix.ps1
+_debug_*.ps1
 
 # Migration log files
 migration-log-*.log

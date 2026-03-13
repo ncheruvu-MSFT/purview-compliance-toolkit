@@ -315,7 +315,15 @@ Skip specific components with flags:
 
 # Import to target tenant
 .\06-Import-SensitivityLabels.ps1 -LabelsFile ".\exports\labels-export-*.json" -PoliciesFile ".\exports\label-policies-export-*.json"
+
+# Import with recipient/domain mapping (cross-tenant migration)
+.\06-Import-SensitivityLabels.ps1 -LabelsFile ".\exports\labels-export-*.json" -PoliciesFile ".\exports\label-policies-export-*.json" -MappingFile ".\label-import-mapping.json"
 ```
+
+> **Mapping file**: Copy `label-import-mapping.sample.json` → `label-import-mapping.json` and fill in:
+> - `SitIdMap` — custom SIT GUID remapping (skip if IDs are identical across tenants)
+> - `EncryptionIdentityMap` — domain replacement in encryption RightsDefinitions
+> - `RecipientMap` — user/group email address remapping for encryption permissions and policy locations
 
 ### DLP Policies (07/08)
 ```powershell
@@ -386,6 +394,7 @@ This script will:
 ### ⚠️ Known Limitations
 *   **Insider Risk Management** — `Get-InsiderRiskPolicy` and related cmdlets are not publicly documented in the Security & Compliance PowerShell module. Manual portal-based backup or future Microsoft API support required.
 *   **Label encryption settings** — Re-creating labels with Azure RMS encryption requires the target tenant to have the same Azure RMS configuration. Encryption settings are exported for reference but may need manual configuration.
+*   **Label recipient mapping** — Use `RecipientMap` in `label-import-mapping.json` to remap user/group email addresses that differ between tenants (encryption permissions and policy scoping).
 *   **Label/policy propagation** — Sensitivity labels and their policies may take up to 24 hours to propagate to all users and services after import.
 
 ### 🚫 Multi-Tenant Organization (MTO) — Out of Scope

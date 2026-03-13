@@ -1,0 +1,32 @@
+{
+  "_comment": "Copy this file to label-import-mapping.json and fill in your target-tenant values.",
+  "_comment2": "label-import-mapping.json is listed in .gitignore — never commit real GUIDs or addresses.",
+
+  "//": "─── SIT ID remapping ──────────────────────────────────────────────────────────",
+  "//1": "Keys = source custom SIT GUIDs, values = target SIT GUIDs.",
+  "//2": "Only needed when custom SIT IDs differ between tenants.",
+  "//3": "Verify with: Get-DlpSensitiveInformationType | Where-Object { $_.Publisher -ne 'Microsoft Corporation' } | Select Id, Name",
+  "SitIdMap": {
+    "SOURCE-SIT-GUID-1": "TARGET-SIT-GUID-1",
+    "SOURCE-SIT-GUID-2": "TARGET-SIT-GUID-2"
+  },
+
+  "//4": "─── Encryption identity (domain) remapping ────────────────────────────────────",
+  "//5": "Keys = source tenant domains, values = target tenant domains.",
+  "//6": "Applied to encryption RightsDefinitions (e.g. co-author, viewer permissions).",
+  "EncryptionIdentityMap": {
+    "source.onmicrosoft.com": "target.onmicrosoft.com",
+    "sourcedomain.com": "targetdomain.com"
+  },
+
+  "//7": "─── Recipient (user/group) remapping ─────────────────────────────────────────",
+  "//8": "Keys = source user/group email addresses, values = target equivalents.",
+  "//9": "Applied to encryption RightsDefinitions AND label policy locations",
+  "//10": "(ExchangeLocation, ExchangeLocationException, ModernGroupLocation, etc.).",
+  "//11": "Use this when users/groups have different addresses across tenants.",
+  "RecipientMap": {
+    "UserA@source.com": "UserA@target.com",
+    "GroupA@source.com": "GroupA@target.com",
+    "DL-Compliance@source.com": "DL-Compliance@target.com"
+  }
+}

@@ -21,6 +21,7 @@
 |------|---------|-------------|
 | `05-Export-SensitivityLabels.ps1` | Export labels + label policies to JSON | Source tenant — backup/migration |
 | `06-Import-SensitivityLabels.ps1` | Import labels + policies from JSON | Target tenant — restore/migration |
+| `label-import-mapping.sample.json` | Template for label import mappings (SITs, domains, recipients) | Copy to `label-import-mapping.json` and fill in |
 
 ---
 

@@ -35,12 +35,20 @@
     Optional hashtable mapping source tenant domains to target tenant domains
     in RightsDefinitions. Example: @{ "source.onmicrosoft.com" = "target.onmicrosoft.com" }
 
+.PARAMETER RecipientMap
+    Optional hashtable mapping source user/group email addresses to target
+    tenant equivalents. Applied to encryption RightsDefinitions and label
+    policy location fields (ExchangeLocation, etc.).
+    Example: @{ "UserA@source.com" = "UserA@target.com" }
+
 .PARAMETER MappingFile
-    Optional JSON file providing SitGuidMap and EncryptionIdentityMap.
+    Optional JSON file providing SitGuidMap, EncryptionIdentityMap, and
+    RecipientMap.
     Example structure:
     {
       "SitIdMap": { "source-guid": "target-guid" },
-      "EncryptionIdentityMap": { "source.onmicrosoft.com": "target.onmicrosoft.com" }
+      "EncryptionIdentityMap": { "source.onmicrosoft.com": "target.onmicrosoft.com" },
+      "RecipientMap": { "User@source.com": "User@target.com", "Group@source.com": "Group@target.com" }
     }
 
 .PARAMETER Force
@@ -57,6 +65,9 @@
 
 .EXAMPLE
     .\06-Import-SensitivityLabels.ps1 -LabelsFile ".\exports\labels-export.json" -PoliciesFile ".\exports\label-policies-export.json" -MappingFile ".\label-import-mapping.json"
+
+.EXAMPLE
+    .\06-Import-SensitivityLabels.ps1 -LabelsFile ".\exports\labels-export.json" -PoliciesFile ".\exports\label-policies-export.json" -MappingFile ".\label-import-mapping.json" -RecipientMap @{ "User@source.com" = "User@target.com" }
 
 .NOTES
     Must be connected to the TARGET tenant's Security & Compliance PowerShell.
@@ -78,6 +89,9 @@ param(
 
     [Parameter(Mandatory = $false)]
     [hashtable]$EncryptionIdentityMap = @{},
+
+    [Parameter(Mandatory = $false)]
+    [hashtable]$RecipientMap = @{},
 
     [Parameter(Mandatory = $false)]
     [ValidateScript({ Test-Path $_ })]
@@ -121,6 +135,11 @@ if ($MappingFile) {
             if (-not $EncryptionIdentityMap.ContainsKey($_.Name)) { $EncryptionIdentityMap[$_.Name] = $_.Value }
         }
     }
+    if ($mapping.RecipientMap) {
+        $mapping.RecipientMap.PSObject.Properties | ForEach-Object {
+            if (-not $RecipientMap.ContainsKey($_.Name)) { $RecipientMap[$_.Name] = $_.Value }
+        }
+    }
 }
 
 # ── Helper: safe JSON import (handles case-conflicting keys from older exports) ─
@@ -150,11 +169,26 @@ function Get-LocationNames {
     } | Where-Object { $_ -ne $null })
 }
 
+# ── Helper: remap recipient addresses in location name arrays ────────
+function Invoke-LocationRemap {
+    param(
+        [array]$LocationNames,
+        [hashtable]$RecMap = @{}
+    )
+    if (-not $LocationNames -or $LocationNames.Count -eq 0) { return $LocationNames }
+    if (-not $RecMap -or $RecMap.Count -eq 0) { return $LocationNames }
+    @($LocationNames | ForEach-Object {
+        $name = $_
+        if ($RecMap.ContainsKey($name)) { $RecMap[$name] } else { $name }
+    })
+}
+
 # ── Helper: parse LabelActions JSON array into Set-Label parameters ────
 function ConvertFrom-LabelActions {
     param(
         [array]$LabelActions,
-        [hashtable]$IdentityMap = @{}
+        [hashtable]$IdentityMap = @{},
+        [hashtable]$RecipientMap = @{}
     )
     $params = @{}
     if (-not $LabelActions -or $LabelActions.Count -eq 0) { return $params }
@@ -224,6 +258,12 @@ function ConvertFrom-LabelActions {
                             $rdValue = $rdValue -replace [regex]::Escape($srcDomain), $IdentityMap[$srcDomain]
                         }
                     }
+                    # Remap individual user/group email addresses
+                    if ($RecipientMap -and $RecipientMap.Count -gt 0) {
+                        foreach ($srcAddr in $RecipientMap.Keys) {
+                            $rdValue = $rdValue -replace [regex]::Escape($srcAddr), $RecipientMap[$srcAddr]
+                        }
+                    }
                     $params['EncryptionRightsDefinitions'] = $rdValue
                 }
                 # Skip templateid, linkedtemplateid, templatearchived (auto-generated)
@@ -291,12 +331,13 @@ function Set-LabelProperties {
         [string]$DisplayName,
         $Label,
         [hashtable]$IdMap = @{},
-        [hashtable]$SitMap = @{}
+        [hashtable]$SitMap = @{},
+        [hashtable]$RecMap = @{}
     )
     # Apply LabelActions (content marking, encryption, watermarking)
     if ($Label.LabelActions -and $Label.LabelActions.Count -gt 0) {
         try {
-            $actionParams = ConvertFrom-LabelActions -LabelActions $Label.LabelActions -IdentityMap $IdMap
+            $actionParams = ConvertFrom-LabelActions -LabelActions $Label.LabelActions -IdentityMap $IdMap -RecipientMap $RecMap
             if ($actionParams.Count -gt 0) {
                 $actionParams['Identity'] = $LabelGuid
                 Set-Label @actionParams -ErrorAction Stop
@@ -327,6 +368,7 @@ if ($PoliciesFile)  { Write-Host "   Policies file:  $PoliciesFile" -ForegroundC
 if ($MappingFile)   { Write-Host "   Mapping file:   $MappingFile" -ForegroundColor Gray }
 if ($SitGuidMap.Count -gt 0)           { Write-Host "   SIT mappings:   $($SitGuidMap.Count)" -ForegroundColor Gray }
 if ($EncryptionIdentityMap.Count -gt 0) { Write-Host "   ID mappings:    $($EncryptionIdentityMap.Count)" -ForegroundColor Gray }
+if ($RecipientMap.Count -gt 0)         { Write-Host "   Recipient maps: $($RecipientMap.Count)" -ForegroundColor Gray }
 Write-Host ""
 
 # ─────────────────────────────────────────────────────────────────────
@@ -399,7 +441,7 @@ foreach ($label in $parentLabels) {
 
                 # Apply LabelActions and Conditions in a second pass
                 Set-LabelProperties -LabelGuid $existing.Guid.ToString() -DisplayName $displayName `
-                    -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap
+                    -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap -RecMap $RecipientMap
             } catch {
                 Write-Host "   ❌ $displayName — update failed: $($_.Exception.Message)" -ForegroundColor Red
             }
@@ -432,7 +474,7 @@ foreach ($label in $parentLabels) {
 
                 # Apply LabelActions and Conditions in a second pass
                 Set-LabelProperties -LabelGuid $newLabel.Guid.ToString() -DisplayName $displayName `
-                    -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap
+                    -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap -RecMap $RecipientMap
             } catch {
                 Write-Host "   ❌ $displayName — create failed: $($_.Exception.Message)" -ForegroundColor Red
             }
@@ -516,7 +558,7 @@ if ($subLabels.Count -gt 0) {
 
                     # Apply LabelActions and Conditions in a second pass
                     Set-LabelProperties -LabelGuid $existing.Guid.ToString() -DisplayName $displayName `
-                        -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap
+                        -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap -RecMap $RecipientMap
                 } catch {
                     Write-Host "   ❌ $displayName — update failed: $($_.Exception.Message)" -ForegroundColor Red
                 }
@@ -549,7 +591,7 @@ if ($subLabels.Count -gt 0) {
 
                     # Apply LabelActions and Conditions in a second pass
                     Set-LabelProperties -LabelGuid $newLabel.Guid.ToString() -DisplayName $displayName `
-                        -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap
+                        -Label $label -IdMap $EncryptionIdentityMap -SitMap $SitGuidMap -RecMap $RecipientMap
                 } catch {
                     Write-Host "   ❌ $displayName — create failed: $($_.Exception.Message)" -ForegroundColor Red
                 }
@@ -621,7 +663,7 @@ if ($PoliciesFile) {
                 if ($policy.Comment) { $newParams['Comment'] = $policy.Comment }
 
                 # Exchange locations with recipient validation
-                $exchLoc = Get-LocationNames $policy.ExchangeLocation
+                $exchLoc = Invoke-LocationRemap (Get-LocationNames $policy.ExchangeLocation) $RecipientMap
                 if ($exchLoc.Count -gt 0) {
                     if ($exchLoc.Count -eq 1 -and $exchLoc[0] -eq 'All') {
                         $newParams['ExchangeLocation'] = $exchLoc
@@ -630,23 +672,23 @@ if ($PoliciesFile) {
                     }
                 }
                 # SharePoint locations
-                $spLoc = Get-LocationNames $policy.SharePointLocation
+                $spLoc = Invoke-LocationRemap (Get-LocationNames $policy.SharePointLocation) $RecipientMap
                 if ($spLoc.Count -gt 0) { $newParams['SharePointLocation'] = $spLoc }
                 # OneDrive locations (was missing)
-                $odLoc = Get-LocationNames $policy.OneDriveLocation
+                $odLoc = Invoke-LocationRemap (Get-LocationNames $policy.OneDriveLocation) $RecipientMap
                 if ($odLoc.Count -gt 0) { $newParams['OneDriveLocation'] = $odLoc }
                 # Modern Group locations
-                $mgLoc = Get-LocationNames $policy.ModernGroupLocation
+                $mgLoc = Invoke-LocationRemap (Get-LocationNames $policy.ModernGroupLocation) $RecipientMap
                 if ($mgLoc.Count -gt 0) { $newParams['ModernGroupLocation'] = $mgLoc }
 
                 # Location exceptions (all were missing)
-                $exchExc = Get-LocationNames $policy.ExchangeLocationException
+                $exchExc = Invoke-LocationRemap (Get-LocationNames $policy.ExchangeLocationException) $RecipientMap
                 if ($exchExc.Count -gt 0) { $newParams['ExchangeLocationException'] = $exchExc }
-                $spExc = Get-LocationNames $policy.SharePointLocationException
+                $spExc = Invoke-LocationRemap (Get-LocationNames $policy.SharePointLocationException) $RecipientMap
                 if ($spExc.Count -gt 0) { $newParams['SharePointLocationException'] = $spExc }
-                $odExc = Get-LocationNames $policy.OneDriveLocationException
+                $odExc = Invoke-LocationRemap (Get-LocationNames $policy.OneDriveLocationException) $RecipientMap
                 if ($odExc.Count -gt 0) { $newParams['OneDriveLocationException'] = $odExc }
-                $mgExc = Get-LocationNames $policy.ModernGroupLocationException
+                $mgExc = Invoke-LocationRemap (Get-LocationNames $policy.ModernGroupLocationException) $RecipientMap
                 if ($mgExc.Count -gt 0) { $newParams['ModernGroupLocationException'] = $mgExc }
 
                 if ($policy.AdvancedSettings -and $policy.AdvancedSettings.Count -gt 0) {
