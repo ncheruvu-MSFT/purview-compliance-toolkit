@@ -304,6 +304,215 @@ function Invoke-EvidenceStorageRemap {
     return $changed
 }
 
+# ── Transform 7: Label GUID remapping inside ContentPropertyContainsWords ──
+# ContentPropertyContainsWords contains strings like
+# "msip_labels.MSIP_Label_<GUID>_Enabled" — swap the GUID using LabelIdMap.
+function Invoke-LabelIdRemapInContentProperty {
+    param([PSCustomObject]$Rule, [hashtable]$LabelIdMap)
+    if (-not $LabelIdMap -or $LabelIdMap.Count -eq 0) { return }
+    foreach ($propName in @('ContentPropertyContainsWords','ExceptIfContentPropertyContainsWords')) {
+        if (-not $Rule.$propName) { continue }
+        $remapped = @($Rule.$propName | ForEach-Object {
+            $val = $_
+            foreach ($sourceId in $LabelIdMap.Keys) {
+                $val = $val -replace [regex]::Escape($sourceId), $LabelIdMap[$sourceId]
+            }
+            $val
+        })
+        $Rule.$propName = $remapped
+    }
+}
+
+# ── Transform 8: Confidence-level migration (minconfidence → confidencelevel) ──
+# Removes deprecated minconfidence/maxconfidence from ContentContainsSensitiveInformation
+# entries and replaces them with the confidencelevel enum:
+#   ≤65 → Low | ≤75 → Medium | ≤85 → High | >85 → High
+function Invoke-DlpConfidenceLevelMigration {
+    param([PSCustomObject]$Rule)
+    $changed = $false
+    foreach ($propName in @('ContentContainsSensitiveInformation',
+                            'ExceptIfContentContainsSensitiveInformation')) {
+        if (-not $Rule.$propName) { continue }
+        $migrated = @()
+        foreach ($item in $Rule.$propName) {
+            $ht = @{}
+            $item.PSObject.Properties | ForEach-Object { $ht[$_.Name] = $_.Value }
+            if ($ht.ContainsKey('minconfidence') -or $ht.ContainsKey('maxconfidence')) {
+                $min = if ($ht.ContainsKey('minconfidence')) { [int]$ht['minconfidence'] } else { 0 }
+                $level = switch ($true) {
+                    ($min -le 65) { 'Low' }
+                    ($min -le 75) { 'Medium' }
+                    ($min -le 85) { 'High' }
+                    default       { 'High' }
+                }
+                $ht.Remove('minconfidence') | Out-Null
+                $ht.Remove('maxconfidence') | Out-Null
+                if (-not $ht.ContainsKey('confidencelevel')) {
+                    $ht['confidencelevel'] = $level
+                }
+                $changed = $true
+            }
+            $migrated += $ht
+        }
+        $Rule.$propName = $migrated
+    }
+    return $changed
+}
+
+# ── Helper: Build ALL condition + action parameters for a DLP rule ────
+# Returns a hashtable suitable for splatting into New-DlpComplianceRule /
+# Set-DlpComplianceRule (caller adds Name/Policy or Identity).
+function Build-DlpRuleParams {
+    param([PSCustomObject]$Rule)
+    $p = @{}
+
+    # ── Core properties ──
+    if ($null -ne $Rule.Disabled)     { $p['Disabled'] = $Rule.Disabled }
+    if ($Rule.Comment)                { $p['Comment'] = $Rule.Comment }
+
+    # ── Mandatory predicates (API requires at least one) ──
+    if ($Rule.ContentContainsSensitiveInformation) {
+        $p['ContentContainsSensitiveInformation'] = $Rule.ContentContainsSensitiveInformation
+    }
+    if ($Rule.ExceptIfContentContainsSensitiveInformation) {
+        $p['ExceptIfContentContainsSensitiveInformation'] = $Rule.ExceptIfContentContainsSensitiveInformation
+    }
+    if ($Rule.ContentPropertyContainsWords) {
+        $p['ContentPropertyContainsWords'] = $Rule.ContentPropertyContainsWords
+    }
+    if ($Rule.ExceptIfContentPropertyContainsWords) {
+        $p['ExceptIfContentPropertyContainsWords'] = $Rule.ExceptIfContentPropertyContainsWords
+    }
+    if ($Rule.AdvancedRule) { $p['AdvancedRule'] = $Rule.AdvancedRule }
+
+    # Boolean predicates — only pass when $true (false is the default)
+    if ($Rule.ContentIsNotLabeled -eq $true)                     { $p['ContentIsNotLabeled'] = $true }
+    if ($Rule.AttachmentIsNotLabeled -eq $true)                  { $p['AttachmentIsNotLabeled'] = $true }
+    if ($Rule.MessageIsNotLabeled -eq $true)                     { $p['MessageIsNotLabeled'] = $true }
+    if ($Rule.ContentMissingSensitivityLabel -eq $true)          { $p['ContentMissingSensitivityLabel'] = $true }
+    if ($Rule.HasSenderOverride -eq $true)                       { $p['HasSenderOverride'] = $true }
+    if ($Rule.ExceptIfHasSenderOverride -eq $true)               { $p['ExceptIfHasSenderOverride'] = $true }
+    if ($Rule.ProcessingLimitExceeded -eq $true)                 { $p['ProcessingLimitExceeded'] = $true }
+    if ($Rule.ExceptIfProcessingLimitExceeded -eq $true)         { $p['ExceptIfProcessingLimitExceeded'] = $true }
+    if ($Rule.DocumentIsUnsupported -eq $true)                   { $p['DocumentIsUnsupported'] = $true }
+    if ($Rule.ExceptIfDocumentIsUnsupported -eq $true)           { $p['ExceptIfDocumentIsUnsupported'] = $true }
+    if ($Rule.DocumentIsPasswordProtected -eq $true)             { $p['DocumentIsPasswordProtected'] = $true }
+    if ($Rule.ExceptIfDocumentIsPasswordProtected -eq $true)     { $p['ExceptIfDocumentIsPasswordProtected'] = $true }
+    if ($Rule.RestrictBrowserAccess -eq $true)                   { $p['RestrictBrowserAccess'] = $true }
+
+    # ── Scope conditions ──
+    if ($Rule.AccessScope)               { $p['AccessScope'] = $Rule.AccessScope }
+    if ($Rule.ExceptIfAccessScope)       { $p['ExceptIfAccessScope'] = $Rule.ExceptIfAccessScope }
+    if ($Rule.ContentIsShared)           { $p['ContentIsShared'] = $Rule.ContentIsShared }
+    if ($Rule.ExceptIfContentIsShared)   { $p['ExceptIfContentIsShared'] = $Rule.ExceptIfContentIsShared }
+    if ($Rule.NonBifurcatingAccessScope) { $p['NonBifurcatingAccessScope'] = $Rule.NonBifurcatingAccessScope }
+    if ($Rule.FromScope)                 { $p['FromScope'] = $Rule.FromScope }
+    if ($Rule.ExceptIfFromScope)         { $p['ExceptIfFromScope'] = $Rule.ExceptIfFromScope }
+
+    # ── Sender / Recipient conditions ──
+    if ($Rule.SenderIPRanges)            { $p['SenderIPRanges'] = $Rule.SenderIPRanges }
+    if ($Rule.ExceptIfSenderIPRanges)    { $p['ExceptIfSenderIPRanges'] = $Rule.ExceptIfSenderIPRanges }
+    if ($Rule.SenderDomainIs)            { $p['SenderDomainIs'] = $Rule.SenderDomainIs }
+    if ($Rule.ExceptIfSenderDomainIs)    { $p['ExceptIfSenderDomainIs'] = $Rule.ExceptIfSenderDomainIs }
+    if ($Rule.SentTo)                    { $p['SentTo'] = $Rule.SentTo }
+    if ($Rule.ExceptIfSentTo)            { $p['ExceptIfSentTo'] = $Rule.ExceptIfSentTo }
+    if ($Rule.SentToMemberOf)            { $p['SentToMemberOf'] = $Rule.SentToMemberOf }
+    if ($Rule.ExceptIfSentToMemberOf)    { $p['ExceptIfSentToMemberOf'] = $Rule.ExceptIfSentToMemberOf }
+    if ($Rule.RecipientDomainIs)         { $p['RecipientDomainIs'] = $Rule.RecipientDomainIs }
+    if ($Rule.ExceptIfRecipientDomainIs) { $p['ExceptIfRecipientDomainIs'] = $Rule.ExceptIfRecipientDomainIs }
+    if ($Rule.From)                      { $p['From'] = $Rule.From }
+    if ($Rule.ExceptIfFrom)              { $p['ExceptIfFrom'] = $Rule.ExceptIfFrom }
+    if ($Rule.FromMemberOf)              { $p['FromMemberOf'] = $Rule.FromMemberOf }
+    if ($Rule.ExceptIfFromMemberOf)      { $p['ExceptIfFromMemberOf'] = $Rule.ExceptIfFromMemberOf }
+    if ($Rule.FromAddressContainsWords)  { $p['FromAddressContainsWords'] = $Rule.FromAddressContainsWords }
+    if ($Rule.ExceptIfFromAddressContainsWords)  { $p['ExceptIfFromAddressContainsWords'] = $Rule.ExceptIfFromAddressContainsWords }
+    if ($Rule.FromAddressMatchesPatterns)         { $p['FromAddressMatchesPatterns'] = $Rule.FromAddressMatchesPatterns }
+    if ($Rule.ExceptIfFromAddressMatchesPatterns) { $p['ExceptIfFromAddressMatchesPatterns'] = $Rule.ExceptIfFromAddressMatchesPatterns }
+    if ($Rule.AnyOfRecipientAddressMatchesPatterns)         { $p['AnyOfRecipientAddressMatchesPatterns'] = $Rule.AnyOfRecipientAddressMatchesPatterns }
+    if ($Rule.ExceptIfAnyOfRecipientAddressMatchesPatterns) { $p['ExceptIfAnyOfRecipientAddressMatchesPatterns'] = $Rule.ExceptIfAnyOfRecipientAddressMatchesPatterns }
+    if ($Rule.AnyOfRecipientAddressContainsWords)           { $p['AnyOfRecipientAddressContainsWords'] = $Rule.AnyOfRecipientAddressContainsWords }
+    if ($Rule.ExceptIfAnyOfRecipientAddressContainsWords)   { $p['ExceptIfAnyOfRecipientAddressContainsWords'] = $Rule.ExceptIfAnyOfRecipientAddressContainsWords }
+    if ($Rule.SharedWithDomain)          { $p['SharedWithDomain'] = $Rule.SharedWithDomain }
+    if ($Rule.ExceptIfSharedWithDomain)  { $p['ExceptIfSharedWithDomain'] = $Rule.ExceptIfSharedWithDomain }
+
+    # ── Subject / Header / Body conditions ──
+    if ($Rule.SubjectContainsWords)                       { $p['SubjectContainsWords'] = $Rule.SubjectContainsWords }
+    if ($Rule.ExceptIfSubjectContainsWords)               { $p['ExceptIfSubjectContainsWords'] = $Rule.ExceptIfSubjectContainsWords }
+    if ($Rule.SubjectMatchesPatterns)                     { $p['SubjectMatchesPatterns'] = $Rule.SubjectMatchesPatterns }
+    if ($Rule.ExceptIfSubjectMatchesPatterns)             { $p['ExceptIfSubjectMatchesPatterns'] = $Rule.ExceptIfSubjectMatchesPatterns }
+    if ($Rule.SubjectOrBodyMatchesPatterns)               { $p['SubjectOrBodyMatchesPatterns'] = $Rule.SubjectOrBodyMatchesPatterns }
+    if ($Rule.ExceptIfSubjectOrBodyMatchesPatterns)       { $p['ExceptIfSubjectOrBodyMatchesPatterns'] = $Rule.ExceptIfSubjectOrBodyMatchesPatterns }
+    if ($Rule.SubjectOrBodyContainsWords)                 { $p['SubjectOrBodyContainsWords'] = $Rule.SubjectOrBodyContainsWords }
+    if ($Rule.ExceptIfSubjectOrBodyContainsWords)         { $p['ExceptIfSubjectOrBodyContainsWords'] = $Rule.ExceptIfSubjectOrBodyContainsWords }
+    if ($Rule.HeaderContainsWords)                        { $p['HeaderContainsWords'] = $Rule.HeaderContainsWords }
+    if ($Rule.ExceptIfHeaderContainsWords)                { $p['ExceptIfHeaderContainsWords'] = $Rule.ExceptIfHeaderContainsWords }
+    if ($Rule.HeaderMatchesPatterns)                      { $p['HeaderMatchesPatterns'] = $Rule.HeaderMatchesPatterns }
+    if ($Rule.ExceptIfHeaderMatchesPatterns)              { $p['ExceptIfHeaderMatchesPatterns'] = $Rule.ExceptIfHeaderMatchesPatterns }
+
+    # ── Document conditions ──
+    if ($Rule.DocumentNameMatchesPatterns)                { $p['DocumentNameMatchesPatterns'] = $Rule.DocumentNameMatchesPatterns }
+    if ($Rule.ExceptIfDocumentNameMatchesPatterns)        { $p['ExceptIfDocumentNameMatchesPatterns'] = $Rule.ExceptIfDocumentNameMatchesPatterns }
+    if ($Rule.DocumentNameMatchesWords)                   { $p['DocumentNameMatchesWords'] = $Rule.DocumentNameMatchesWords }
+    if ($Rule.ExceptIfDocumentNameMatchesWords)           { $p['ExceptIfDocumentNameMatchesWords'] = $Rule.ExceptIfDocumentNameMatchesWords }
+    if ($Rule.DocumentContainsWords)                      { $p['DocumentContainsWords'] = $Rule.DocumentContainsWords }
+    if ($Rule.ExceptIfDocumentContainsWords)              { $p['ExceptIfDocumentContainsWords'] = $Rule.ExceptIfDocumentContainsWords }
+    if ($Rule.DocumentMatchesPatterns)                    { $p['DocumentMatchesPatterns'] = $Rule.DocumentMatchesPatterns }
+    if ($Rule.ExceptIfDocumentMatchesPatterns)            { $p['ExceptIfDocumentMatchesPatterns'] = $Rule.ExceptIfDocumentMatchesPatterns }
+    if ($Rule.DocumentSizeOver)                           { $p['DocumentSizeOver'] = $Rule.DocumentSizeOver }
+    if ($Rule.ExceptIfDocumentSizeOver)                   { $p['ExceptIfDocumentSizeOver'] = $Rule.ExceptIfDocumentSizeOver }
+    if ($Rule.DocumentCreatedBy)                          { $p['DocumentCreatedBy'] = $Rule.DocumentCreatedBy }
+    if ($Rule.ExceptIfDocumentCreatedBy)                  { $p['ExceptIfDocumentCreatedBy'] = $Rule.ExceptIfDocumentCreatedBy }
+    if ($Rule.DocumentCreatedByMemberOf)                  { $p['DocumentCreatedByMemberOf'] = $Rule.DocumentCreatedByMemberOf }
+    if ($Rule.ExceptIfDocumentCreatedByMemberOf)          { $p['ExceptIfDocumentCreatedByMemberOf'] = $Rule.ExceptIfDocumentCreatedByMemberOf }
+    if ($Rule.ContentExtensionMatchesWords)               { $p['ContentExtensionMatchesWords'] = $Rule.ContentExtensionMatchesWords }
+    if ($Rule.ExceptIfContentExtensionMatchesWords)       { $p['ExceptIfContentExtensionMatchesWords'] = $Rule.ExceptIfContentExtensionMatchesWords }
+    if ($Rule.ContentFileTypeMatches)                     { $p['ContentFileTypeMatches'] = $Rule.ContentFileTypeMatches }
+    if ($Rule.ExceptIfContentFileTypeMatches)             { $p['ExceptIfContentFileTypeMatches'] = $Rule.ExceptIfContentFileTypeMatches }
+    if ($Rule.ContentCharacterSetContainsWords)           { $p['ContentCharacterSetContainsWords'] = $Rule.ContentCharacterSetContainsWords }
+    if ($Rule.UnscannableDocumentExtensionIs)             { $p['UnscannableDocumentExtensionIs'] = $Rule.UnscannableDocumentExtensionIs }
+
+    # ── Message conditions ──
+    if ($Rule.MessageSizeOver)           { $p['MessageSizeOver'] = $Rule.MessageSizeOver }
+    if ($Rule.ExceptIfMessageSizeOver)   { $p['ExceptIfMessageSizeOver'] = $Rule.ExceptIfMessageSizeOver }
+    if ($Rule.MessageTypeMatches)        { $p['MessageTypeMatches'] = $Rule.MessageTypeMatches }
+
+    # ── AD attribute conditions ──
+    if ($Rule.SenderADAttributeMatchesPatterns)      { $p['SenderADAttributeMatchesPatterns'] = $Rule.SenderADAttributeMatchesPatterns }
+    if ($Rule.SenderADAttributeContainsWords)        { $p['SenderADAttributeContainsWords'] = $Rule.SenderADAttributeContainsWords }
+    if ($Rule.RecipientADAttributeContainsWords)     { $p['RecipientADAttributeContainsWords'] = $Rule.RecipientADAttributeContainsWords }
+    if ($Rule.RecipientADAttributeMatchesPatterns)   { $p['RecipientADAttributeMatchesPatterns'] = $Rule.RecipientADAttributeMatchesPatterns }
+
+    # ── Label conditions ──
+    if ($Rule.HasLabelDowngradedFrom)                { $p['HasLabelDowngradedFrom'] = $Rule.HasLabelDowngradedFrom }
+    if ($Rule.MessageLabelChangeDetected)            { $p['MessageLabelChangeDetected'] = $Rule.MessageLabelChangeDetected }
+    if ($Rule.ExceptIfMessageLabelChangeDetected)    { $p['ExceptIfMessageLabelChangeDetected'] = $Rule.ExceptIfMessageLabelChangeDetected }
+
+    # ── IRM / Risk conditions ──
+    if ($Rule.SharedByIRMUserRisk)   { $p['SharedByIRMUserRisk'] = $Rule.SharedByIRMUserRisk }
+    if ($Rule.SharedByIRMAgentRisk)  { $p['SharedByIRMAgentRisk'] = $Rule.SharedByIRMAgentRisk }
+
+    # ── Actions / Notifications ──
+    if ($null -ne $Rule.BlockAccess)      { $p['BlockAccess'] = $Rule.BlockAccess }
+    if ($Rule.BlockAccessScope)           { $p['BlockAccessScope'] = $Rule.BlockAccessScope }
+    if ($Rule.NotifyUser)                 { $p['NotifyUser'] = $Rule.NotifyUser }
+    if ($Rule.NotifyUserType)             { $p['NotifyUserType'] = $Rule.NotifyUserType }
+    if ($Rule.NotifyEmailCustomText)      { $p['NotifyEmailCustomText'] = $Rule.NotifyEmailCustomText }
+    if ($Rule.NotifyPolicyTipCustomText)  { $p['NotifyPolicyTipCustomText'] = $Rule.NotifyPolicyTipCustomText }
+    if ($Rule.NotifyOverride)             { $p['NotifyOverride'] = $Rule.NotifyOverride }
+    if ($Rule.NotifyAllowOverride)        { $p['NotifyAllowOverride'] = $Rule.NotifyAllowOverride }
+    if ($Rule.GenerateAlert)              { $p['GenerateAlert'] = $Rule.GenerateAlert }
+    if ($Rule.GenerateIncidentReport)     { $p['GenerateIncidentReport'] = $Rule.GenerateIncidentReport }
+    if ($Rule.IncidentReportContent)      { $p['IncidentReportContent'] = $Rule.IncidentReportContent }
+    if ($Rule.ReportSeverityLevel)        { $p['ReportSeverityLevel'] = $Rule.ReportSeverityLevel }
+    if ($Rule.RuleErrorAction)            { $p['RuleErrorAction'] = $Rule.RuleErrorAction }
+    if ($Rule.ConfidenceLevel)            { $p['ConfidenceLevel'] = $Rule.ConfidenceLevel }
+    if ($Rule.ActionOnError)              { $p['ActionOnError'] = $Rule.ActionOnError }
+    if ($Rule.EvidenceStorage)            { $p['EvidenceStorage'] = $Rule.EvidenceStorage }
+    if ($Rule.IncidentReportDestination)  { $p['IncidentReportDestination'] = $Rule.IncidentReportDestination }
+
+    return $p
+}
+
 
 Write-Host ""
 Write-Host "   Policies file: $PoliciesFile" -ForegroundColor Gray
@@ -456,6 +665,7 @@ if ($anyTransform) {
     if ($sitIdMap.Count -gt 0 -or $labelIdMap.Count -gt 0) {
         foreach ($rule in $sourceRules) {
             Invoke-IdRemap -Rule $rule -SitIdMap $sitIdMap -LabelIdMap $labelIdMap
+            Invoke-LabelIdRemapInContentProperty -Rule $rule -LabelIdMap $labelIdMap
         }
         Write-Host "   T5 🔑 SIT/Label ID remapping applied to $($sourceRules.Count) rule(s)" -ForegroundColor DarkYellow
     }
@@ -474,9 +684,26 @@ if ($anyTransform) {
         }
     }
 
+    # T7 — Confidence-level migration (always applied when transforms are active)
+    $t7Count = 0
+    foreach ($rule in $sourceRules) {
+        if (Invoke-DlpConfidenceLevelMigration -Rule $rule) { $t7Count++ }
+    }
+    if ($t7Count -gt 0) {
+        Write-Host "   T7 📊 Confidence-level migration: $t7Count rule(s) updated (minconfidence → confidencelevel)" -ForegroundColor DarkYellow
+    }
+
     Write-Host "   ✅ Transforms complete" -ForegroundColor Green
     Write-Host ""
 } else {
+    # Even without mapping-file transforms, always migrate confidence levels
+    $t7Count = 0
+    foreach ($rule in $sourceRules) {
+        if (Invoke-DlpConfidenceLevelMigration -Rule $rule) { $t7Count++ }
+    }
+    if ($t7Count -gt 0) {
+        Write-Host "   📊 Confidence-level migration: $t7Count rule(s) updated (minconfidence → confidencelevel)" -ForegroundColor DarkYellow
+    }
     Write-Host "⏩ Step 3: No transforms configured — importing as-is" -ForegroundColor DarkGray
     Write-Host ""
 }
@@ -556,6 +783,53 @@ foreach ($policy in $sourcePolicies) {
 Write-Host ""
 
 # ─────────────────────────────────────────────────────────────────────
+# STEP 4b: Pre-flight — check rules have mandatory predicates
+# ─────────────────────────────────────────────────────────────────────
+if ($sourceRules.Count -gt 0) {
+    $mandatoryPredicates = @(
+        'ContentContainsSensitiveInformation','ContentPropertyContainsWords',
+        'ContentIsNotLabeled','AttachmentIsNotLabeled','MessageIsNotLabeled',
+        'ContentMissingSensitivityLabel','AdvancedRule',
+        'AccessScope','ContentIsShared','FromScope','HasSenderOverride',
+        'ProcessingLimitExceeded','DocumentIsUnsupported','DocumentIsPasswordProtected',
+        'SenderIPRanges','SenderDomainIs','SentTo','SentToMemberOf',
+        'RecipientDomainIs','From','FromMemberOf',
+        'FromAddressContainsWords','FromAddressMatchesPatterns',
+        'AnyOfRecipientAddressMatchesPatterns','AnyOfRecipientAddressContainsWords',
+        'SubjectContainsWords','SubjectMatchesPatterns',
+        'HeaderContainsWords','HeaderMatchesPatterns',
+        'DocumentNameMatchesPatterns','DocumentNameMatchesWords',
+        'DocumentContainsWords','DocumentMatchesPatterns',
+        'DocumentSizeOver','DocumentCreatedBy','DocumentCreatedByMemberOf',
+        'ContentExtensionMatchesWords','ContentFileTypeMatches',
+        'ContentCharacterSetContainsWords','UnscannableDocumentExtensionIs',
+        'MessageSizeOver','MessageTypeMatches',
+        'SubjectOrBodyMatchesPatterns','SubjectOrBodyContainsWords',
+        'SharedWithDomain','SharedByIRMUserRisk','SharedByIRMAgentRisk',
+        'HasLabelDowngradedFrom','MessageLabelChangeDetected',
+        'RestrictBrowserAccess','NonBifurcatingAccessScope'
+    )
+    $emptyRules = @()
+    foreach ($rule in $sourceRules) {
+        $hasCondition = $false
+        foreach ($pred in $mandatoryPredicates) {
+            $val = $rule.$pred
+            if ($null -ne $val -and $val -ne $false -and $val -ne '' -and @($val).Count -gt 0) {
+                $hasCondition = $true
+                break
+            }
+        }
+        if (-not $hasCondition) { $emptyRules += $rule.Name }
+    }
+    if ($emptyRules.Count -gt 0) {
+        Write-Host "   ⚠️  Pre-flight: $($emptyRules.Count) rule(s) have NO mandatory predicates — they will likely fail:" -ForegroundColor Yellow
+        $emptyRules | ForEach-Object { Write-Host "      - $_" -ForegroundColor DarkYellow }
+        Write-Host "   These may need AdvancedRule conditions or the export may be missing fields." -ForegroundColor Yellow
+        Write-Host ""
+    }
+}
+
+# ─────────────────────────────────────────────────────────────────────
 # STEP 5: Import DLP rules
 # ─────────────────────────────────────────────────────────────────────
 if ($sourceRules.Count -gt 0) {
@@ -581,6 +855,9 @@ if ($sourceRules.Count -gt 0) {
             
             $existing = Get-DlpComplianceRule -Identity $ruleName -ErrorAction SilentlyContinue
             
+            # Build the full condition + action parameter set once
+            $ruleParams = Build-DlpRuleParams -Rule $rule
+
             if ($existing) {
                 if ($SkipExisting) {
                     Write-Host "   ⏩ $ruleName (already exists — skipped)" -ForegroundColor DarkGray
@@ -590,24 +867,21 @@ if ($sourceRules.Count -gt 0) {
                 
                 try {
                     $setParams = @{ Identity = $ruleName }
-                    if ($null -ne $rule.Disabled)    { $setParams['Disabled'] = $rule.Disabled }
-                    if ($rule.Comment)               { $setParams['Comment'] = $rule.Comment }
-                    if ($null -ne $rule.BlockAccess)  { $setParams['BlockAccess'] = $rule.BlockAccess }
-                    if ($rule.BlockAccessScope)       { $setParams['BlockAccessScope'] = $rule.BlockAccessScope }
-                    if ($rule.NotifyUser)             { $setParams['NotifyUser'] = $rule.NotifyUser }
-                    if ($rule.GenerateAlert)          { $setParams['GenerateAlert'] = $rule.GenerateAlert }
-                    if ($rule.GenerateIncidentReport) { $setParams['GenerateIncidentReport'] = $rule.GenerateIncidentReport }
-                    if ($rule.ReportSeverityLevel)    { $setParams['ReportSeverityLevel'] = $rule.ReportSeverityLevel }
-                    if ($rule.ContentContainsSensitiveInformation) {
-                        $setParams['ContentContainsSensitiveInformation'] = $rule.ContentContainsSensitiveInformation
-                    }
+                    foreach ($k in $ruleParams.Keys) { $setParams[$k] = $ruleParams[$k] }
                     
                     Set-DlpComplianceRule @setParams -ErrorAction Stop
                     Write-Host "   🔄 $ruleName (updated)" -ForegroundColor Cyan
                     $rUpdated++
                 } catch {
-                    Write-Host "   ❌ $ruleName — update failed: $($_.Exception.Message)" -ForegroundColor Red
-                    $rFailures++
+                    $msg = $_.Exception.Message
+                    # Soft-fail on known non-fatal errors
+                    if ($msg -match 'has been deleted|Workload.*not supported|tenant.*not licensed|scope.*not licensed|label.*not found|property.*is read-only') {
+                        Write-Host "   ⚠️  $ruleName — update skipped (known limitation): $msg" -ForegroundColor Yellow
+                        $rSkipped++
+                    } else {
+                        Write-Host "   ❌ $ruleName — update failed: $msg" -ForegroundColor Red
+                        $rFailures++
+                    }
                 }
             } else {
                 try {
@@ -615,31 +889,21 @@ if ($sourceRules.Count -gt 0) {
                         Name   = $ruleName
                         Policy = $policyName
                     }
-                    if ($null -ne $rule.Disabled)    { $newParams['Disabled'] = $rule.Disabled }
-                    if ($rule.Comment)               { $newParams['Comment'] = $rule.Comment }
-                    if ($null -ne $rule.BlockAccess)  { $newParams['BlockAccess'] = $rule.BlockAccess }
-                    if ($rule.BlockAccessScope)       { $newParams['BlockAccessScope'] = $rule.BlockAccessScope }
-                    if ($rule.NotifyUser)             { $newParams['NotifyUser'] = $rule.NotifyUser }
-                    if ($rule.GenerateAlert)          { $newParams['GenerateAlert'] = $rule.GenerateAlert }
-                    if ($rule.GenerateIncidentReport) { $newParams['GenerateIncidentReport'] = $rule.GenerateIncidentReport }
-                    if ($rule.ReportSeverityLevel)    { $newParams['ReportSeverityLevel'] = $rule.ReportSeverityLevel }
-                    if ($rule.IncidentReportContent)  { $newParams['IncidentReportContent'] = $rule.IncidentReportContent }
-                    if ($rule.ContentContainsSensitiveInformation) {
-                        $newParams['ContentContainsSensitiveInformation'] = $rule.ContentContainsSensitiveInformation
-                    }
-                    if ($rule.AccessScope)            { $newParams['AccessScope'] = $rule.AccessScope }
-                    if ($rule.NotifyOverride)         { $newParams['NotifyOverride'] = $rule.NotifyOverride }
-                    if ($rule.NotifyAllowOverride)    { $newParams['NotifyAllowOverride'] = $rule.NotifyAllowOverride }                    if ($rule.EvidenceStorage)        { $setParams['EvidenceStorage'] = $rule.EvidenceStorage }
-                    if ($rule.IncidentReportDestination) { $setParams['IncidentReportDestination'] = $rule.IncidentReportDestination }                    if ($rule.EvidenceStorage)        { $newParams['EvidenceStorage'] = $rule.EvidenceStorage }
-                    if ($rule.IncidentReportDestination) { $newParams['IncidentReportDestination'] = $rule.IncidentReportDestination }
+                    foreach ($k in $ruleParams.Keys) { $newParams[$k] = $ruleParams[$k] }
                     
                     New-DlpComplianceRule @newParams -ErrorAction Stop
                     Write-Host "   ✅ $ruleName → $policyName (created)" -ForegroundColor Green
                     $rCreated++
                     Start-Sleep -Seconds 1
                 } catch {
-                    Write-Host "   ❌ $ruleName — create failed: $($_.Exception.Message)" -ForegroundColor Red
-                    $rFailures++
+                    $msg = $_.Exception.Message
+                    if ($msg -match 'has been deleted|Workload.*not supported|tenant.*not licensed|scope.*not licensed|label.*not found|property.*is read-only|NoMandatoryPredicatePresent') {
+                        Write-Host "   ⚠️  $ruleName — create skipped (known limitation): $msg" -ForegroundColor Yellow
+                        $rSkipped++
+                    } else {
+                        Write-Host "   ❌ $ruleName — create failed: $msg" -ForegroundColor Red
+                        $rFailures++
+                    }
                 }
             }
         }
